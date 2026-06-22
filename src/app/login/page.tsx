@@ -21,7 +21,7 @@ export default function LoginPage() {
     setLoading(true)
     const err = await login(email.trim(), password)
     if (err) {
-      setError('אימייל או סיסמה שגויים')
+      setError(err)
       setLoading(false)
     } else {
       router.replace('/dashboard')
