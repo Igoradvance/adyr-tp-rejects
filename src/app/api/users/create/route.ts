@@ -12,22 +12,29 @@ export async function POST(req: NextRequest) {
 
   const admin = getSupabaseAdmin()
 
-  const { data: authData, error: authError } = await admin.auth.admin.createUser({
-    email,
-    password,
-    email_confirm: true,
-  })
+  let userId: string
 
-  if (authError) return NextResponse.json({ error: authError.message }, { status: 400 })
+  // Check if user already exists in auth
+  const { data: existingList } = await admin.auth.admin.listUsers()
+  const existing = existingList?.users?.find((u: { email?: string }) => u.email === email)
+
+  if (existing) {
+    userId = existing.id
+    // Update password if user exists
+    await admin.auth.admin.updateUserById(userId, { password })
+  } else {
+    const { data: authData, error: authError } = await admin.auth.admin.createUser({
+      email, password, email_confirm: true,
+    })
+    if (authError) return NextResponse.json({ error: authError.message }, { status: 400 })
+    userId = authData.user.id
+  }
 
   const { error: profileError } = await admin
     .from('profiles')
-    .insert({ id: authData.user.id, name, email, role, contractor: contractor || null })
+    .upsert({ id: userId, name, email, role, contractor: contractor || null })
 
-  if (profileError) {
-    await admin.auth.admin.deleteUser(authData.user.id)
-    return NextResponse.json({ error: profileError.message }, { status: 500 })
-  }
+  if (profileError) return NextResponse.json({ error: profileError.message }, { status: 500 })
 
-  return NextResponse.json({ success: true, userId: authData.user.id })
+  return NextResponse.json({ success: true, userId })
 }
