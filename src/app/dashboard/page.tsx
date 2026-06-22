@@ -3,6 +3,7 @@ import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useStore } from '@/lib/store'
 import Header from '@/components/Header'
+import { BUILD, BUILD_DATE, COPYRIGHT, VERSION } from '@/lib/version'
 import Filters from '@/components/Filters'
 import BulkActions from '@/components/BulkActions'
 import TicketTable from '@/components/TicketTable'
@@ -109,6 +110,11 @@ export default function DashboardPage() {
         {/* Table */}
         <TicketTable />
       </main>
+      {/* Footer */}
+      <footer className="max-w-[1600px] mx-auto px-4 sm:px-6 py-4 mt-6 border-t border-gray-200 flex items-center justify-between text-xs text-gray-400">
+        <span>{COPYRIGHT}</span>
+        <span>v{VERSION} · Build {BUILD} · {BUILD_DATE}</span>
+      </footer>
     </div>
   )
 }
