@@ -4,6 +4,12 @@
 
 ---
 
+## Build 17 – 2026-06-22
+### תיקון
+- /api/users/list: שאיבת משתמשים דרך auth.admin.listUsers + merge עם profiles — עוקף RLS לחלוטין
+
+---
+
 ## Build 16 – 2026-06-22
 ### תיקון
 - יצירת משתמש: אם קיים ב-Auth אבל בלי פרופיל — upsert במקום שגיאה

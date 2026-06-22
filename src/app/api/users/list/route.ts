@@ -4,14 +4,24 @@ import { getSupabaseAdmin } from '@/lib/supabaseAdmin'
 export const dynamic = 'force-dynamic'
 
 export async function GET() {
-  const { data, error } = await getSupabaseAdmin()
-    .from('profiles')
-    .select('*')
-    .order('created_at', { ascending: true })
+  const admin = getSupabaseAdmin()
 
-  if (error) {
-    console.error('users/list error:', error.message, error.code)
-    return NextResponse.json({ error: error.message, code: error.code }, { status: 500 })
-  }
-  return NextResponse.json({ users: data })
+  // Get all auth users (bypasses RLS completely)
+  const { data: authData, error: authError } = await admin.auth.admin.listUsers()
+  if (authError) return NextResponse.json({ error: authError.message }, { status: 500 })
+
+  // Get all profiles
+  const { data: profilesData } = await admin.from('profiles').select('*')
+  const profileMap = new Map((profilesData ?? []).map((p: Record<string, unknown>) => [p.id, p]))
+
+  // Merge: auth users + profile data
+  const users = authData.users
+    .map((u: { id: string; email?: string; created_at: string }) => {
+      const profile = profileMap.get(u.id)
+      if (!profile) return null
+      return profile
+    })
+    .filter(Boolean)
+
+  return NextResponse.json({ users })
 }
