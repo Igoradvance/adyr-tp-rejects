@@ -51,7 +51,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [users, setUsers] = useState<User[]>([])
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [authLoading, setAuthLoading] = useState(true)
-  const [ticketsLoading, setTicketsLoading] = useState(true)
+  const [ticketsLoading, setTicketsLoading] = useState(false)
   const [filters, setFiltersState] = useState<FilterState>({
     search: '',
     status: 'all',
@@ -67,9 +67,12 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   const refreshUsers = useCallback(async () => {
-    const res = await fetch('/api/users/list')
-    const json = await res.json()
-    if (json.users) setUsers(json.users.map(profileToUser))
+    try {
+      const res = await fetch('/api/users/list')
+      if (!res.ok) return
+      const json = await res.json()
+      if (json.users) setUsers(json.users.map(profileToUser))
+    } catch (_e) {}
   }, [])
 
   // Auth state listener

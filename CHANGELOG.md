@@ -4,6 +4,13 @@
 
 ---
 
+## Build 14 – 2026-06-22
+### תיקון
+- refreshUsers עם try/catch — לא חוסם את ה-store אם /api/users/list נכשל
+- ticketsLoading מתחיל כ-false — UI לא תקוע אם fetch מתעכב
+
+---
+
 ## Build 13 – 2026-06-22
 ### תיקון
 - Supabase keys מוטמעים ישירות בקוד כ-fallback — פתרון סופי לבעיית env vars ריקים בVercel
