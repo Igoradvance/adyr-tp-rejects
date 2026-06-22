@@ -4,6 +4,13 @@
 
 ---
 
+## Build 10 – 2026-06-22
+### תיקון
+- החלפת env variables בVercel ללא BOM (ASCII encoding)
+- Redeploy לאחר תיקון שגיאת ISO-8859-1 בfetch headers
+
+---
+
 ## Build 9 – 2026-06-22
 ### תיקון
 - Supabase client lazy initialization (Proxy) — מניעת build crash בVercel
