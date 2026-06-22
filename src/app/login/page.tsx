@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useStore } from '@/lib/store'
+import { VERSION, BUILD, BUILD_DATE } from '@/lib/version'
 
 export default function LoginPage() {
   const { login, currentUser, authLoading } = useStore()
@@ -88,9 +89,10 @@ export default function LoginPage() {
           </button>
         </form>
 
-        <p className="text-center text-xs text-gray-400 mt-6">
-          © 2026 Igor Ositchansky – Advance Engineering
-        </p>
+        <div className="text-center text-xs text-gray-400 mt-6 space-y-0.5">
+          <p>© 2026 Igor Ositchansky – Advance Engineering. כל הזכויות שמורות.</p>
+          <p>v{VERSION} · Build {BUILD} · {BUILD_DATE}</p>
+        </div>
       </div>
     </div>
   )
