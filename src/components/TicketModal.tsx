@@ -43,9 +43,8 @@ export default function TicketModal({ ticketId, onClose }: Props) {
     return []
   }
 
-  const canEditFields = role === 'super_admin'
+  const canEditFields = isQCOrAdmin
   const canEditPriority = isQCOrAdmin || role === 'contractor_pm'
-  const canEditNotes = isMyContractor || isQCOrAdmin
   const canAssign = role === 'super_admin' || (role === 'contractor_pm' && isMyContractor)
   const canDelete = role === 'super_admin'
 
@@ -128,32 +127,36 @@ export default function TicketModal({ ticketId, onClose }: Props) {
         <div className="p-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left: main content */}
           <div className="lg:col-span-2 space-y-5">
-            {/* Description */}
+            {/* Description — QC/Admin fill, contractor reads only */}
             <div>
-              <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">תיאור התקלה</label>
-              {canEditFields && editMode ? (
-                <textarea
-                  value={form.description || ''}
-                  onChange={e => setForm(p => ({ ...p, description: e.target.value }))}
-                  rows={4}
-                  className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-                />
+              <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">
+                תיאור התקלה
+                {isContractor && <span className="mr-2 text-gray-300 font-normal normal-case">(בקרת איכות)</span>}
+              </label>
+              {canEditFields ? (
+                editMode ? (
+                  <textarea
+                    value={form.description || ''}
+                    onChange={e => setForm(p => ({ ...p, description: e.target.value }))}
+                    rows={4}
+                    className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                  />
+                ) : (
+                  <div
+                    onClick={() => setEditMode(true)}
+                    className="text-gray-800 text-sm bg-gray-50 hover:bg-gray-100 rounded-xl p-4 leading-relaxed cursor-pointer border-2 border-dashed border-transparent hover:border-gray-300 transition-all"
+                  >
+                    {ticket.description || <span className="text-gray-400">לחץ להזנת תיאור התקלה...</span>}
+                  </div>
+                )
               ) : (
-                <p className="text-gray-800 text-sm bg-gray-50 rounded-xl p-4 leading-relaxed">{ticket.description}</p>
+                <p className="text-gray-800 text-sm bg-blue-50 border border-blue-100 rounded-xl p-4 leading-relaxed">
+                  {ticket.description || <span className="text-gray-400">—</span>}
+                </p>
               )}
             </div>
 
-            {/* Notes */}
-            <div>
-              <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">הערות קבלן</label>
-              <NotesField
-                value={ticket.notes || ''}
-                canEdit={canEditNotes}
-                onSave={v => updateTicket(ticket.id, { notes: v })}
-              />
-            </div>
-
-            {/* Chat */}
+            {/* Chat — main communication channel */}
             <ChatHistory ticketId={ticket.id} messages={ticket.chatMessages} />
 
             {/* Status history */}
@@ -326,50 +329,3 @@ function MetaRow({ label, value }: { label: string; value: string }) {
   )
 }
 
-function NotesField({ value, canEdit, onSave }: { value: string; canEdit: boolean; onSave: (v: string) => void }) {
-  const [editing, setEditing] = useState(false)
-  const [text, setText] = useState(value)
-
-  useEffect(() => { setText(value) }, [value])
-
-  if (!canEdit) {
-    return (
-      <p className="text-sm text-gray-700 bg-gray-50 rounded-xl p-4 min-h-[60px] leading-relaxed">
-        {value || <span className="text-gray-400">אין הערות</span>}
-      </p>
-    )
-  }
-
-  if (!editing) {
-    return (
-      <button
-        onClick={() => setEditing(true)}
-        className="w-full text-right text-sm text-gray-700 bg-gray-50 hover:bg-gray-100 rounded-xl p-4 min-h-[60px] leading-relaxed transition-colors border-2 border-dashed border-transparent hover:border-gray-300"
-      >
-        {value || <span className="text-gray-400 flex items-center gap-1.5"><Edit2 size={13} />לחץ להוספת הערה...</span>}
-      </button>
-    )
-  }
-
-  return (
-    <div>
-      <textarea
-        value={text}
-        onChange={e => setText(e.target.value)}
-        rows={3}
-        autoFocus
-        className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-      />
-      <div className="flex gap-2 mt-2">
-        <button onClick={() => { onSave(text); setEditing(false) }}
-          className="px-3 py-1.5 text-xs bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition-colors">
-          שמור
-        </button>
-        <button onClick={() => { setText(value); setEditing(false) }}
-          className="px-3 py-1.5 text-xs bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">
-          ביטול
-        </button>
-      </div>
-    </div>
-  )
-}

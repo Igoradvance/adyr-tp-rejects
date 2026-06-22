@@ -74,7 +74,6 @@ export default function TicketTable() {
                   </th>
                   <Th label="מס׳ תיק" field="ticketNumber" />
                   {showContractor && <Th label="קבלן" field="contractor" />}
-                  <Th label="תיאור התקלה" />
                   <Th label="סטטוס" field="status" />
                   <Th label="עדיפות" field="priority" />
                   <Th label="משוייך ל" />
@@ -118,10 +117,6 @@ export default function TicketTable() {
                           </span>
                         </td>
                       )}
-
-                      <td className="px-4 py-3 max-w-[280px]">
-                        <p className="text-gray-700 truncate text-xs">{ticket.description}</p>
-                      </td>
 
                       <td className="px-4 py-3">
                         <StatusBadge status={ticket.status} />
