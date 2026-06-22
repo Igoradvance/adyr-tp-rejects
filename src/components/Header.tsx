@@ -2,10 +2,11 @@
 import { useState } from 'react'
 import { useStore } from '@/lib/store'
 import { useRouter } from 'next/navigation'
-import { LogOut, Plus } from 'lucide-react'
+import { LogOut, Plus, KeyRound } from 'lucide-react'
 import NewTicketModal from './NewTicketModal'
 import UserManagement from './UserManagement'
 import { UserRole } from '@/types'
+import { supabase } from '@/lib/supabase'
 
 const ROLE_LABELS: Record<UserRole, string> = {
   super_admin: 'סופר אדמין',
@@ -19,6 +20,20 @@ export default function Header() {
   const router = useRouter()
   const [showNew, setShowNew] = useState(false)
   const [showUsers, setShowUsers] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
+  const [newPassword, setNewPassword] = useState('')
+  const [pwMsg, setPwMsg] = useState('')
+  const [pwLoading, setPwLoading] = useState(false)
+
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (newPassword.length < 6) { setPwMsg('סיסמה חייבת להיות לפחות 6 תווים'); return }
+    setPwLoading(true)
+    const { error } = await supabase.auth.updateUser({ password: newPassword })
+    setPwLoading(false)
+    if (error) { setPwMsg('שגיאה: ' + error.message) }
+    else { setPwMsg('הסיסמה עודכנה בהצלחה!'); setNewPassword(''); setTimeout(() => { setShowPassword(false); setPwMsg('') }, 1500) }
+  }
 
   const canCreate = currentUser?.role === 'super_admin' || currentUser?.role === 'quality_control'
   const canManageUsers = currentUser?.role === 'super_admin'
@@ -76,6 +91,14 @@ export default function Header() {
             </div>
 
             <button
+              onClick={() => { setShowPassword(true); setPwMsg('') }}
+              title="שנה סיסמה"
+              className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-xl transition-colors"
+            >
+              <KeyRound size={17} />
+            </button>
+
+            <button
               onClick={() => { logout(); router.push('/login') }}
               title="יציאה"
               className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-xl transition-colors"
@@ -88,6 +111,41 @@ export default function Header() {
 
       {showNew && <NewTicketModal onClose={() => setShowNew(false)} />}
       {showUsers && <UserManagement onClose={() => setShowUsers(false)} />}
+      {showPassword && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-sm">
+            <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+              <KeyRound size={18} className="text-blue-600" /> שינוי סיסמה
+            </h2>
+            <form onSubmit={handleChangePassword} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">סיסמה חדשה</label>
+                <input
+                  type="password" value={newPassword}
+                  onChange={e => setNewPassword(e.target.value)}
+                  placeholder="לפחות 6 תווים" dir="ltr" autoFocus
+                  className="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              {pwMsg && (
+                <p className={`text-sm px-3 py-2 rounded-lg ${pwMsg.includes('הצלחה') ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'}`}>
+                  {pwMsg}
+                </p>
+              )}
+              <div className="flex gap-2">
+                <button type="submit" disabled={pwLoading}
+                  className="flex-1 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-semibold hover:bg-blue-700 disabled:opacity-50 transition-colors">
+                  {pwLoading ? 'מעדכן...' : 'עדכן סיסמה'}
+                </button>
+                <button type="button" onClick={() => { setShowPassword(false); setNewPassword(''); setPwMsg('') }}
+                  className="px-4 py-2.5 bg-gray-100 text-gray-700 rounded-xl text-sm hover:bg-gray-200 transition-colors">
+                  ביטול
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </>
   )
 }
