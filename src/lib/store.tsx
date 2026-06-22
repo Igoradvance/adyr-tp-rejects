@@ -107,13 +107,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         .order('opened_at', { ascending: false })
 
       if (!error && data) {
-        if (data.length === 0) {
-          const rows = INITIAL_TICKETS.map(ticketToRow)
-          await supabase.from('tickets').insert(rows)
-          setTickets(INITIAL_TICKETS)
-        } else {
-          setTickets(data.map(rowToTicket))
-        }
+        setTickets(data.map(rowToTicket))
       }
     } catch (_e) {
       // fail silently
