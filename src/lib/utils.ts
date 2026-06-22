@@ -27,17 +27,7 @@ export function getOpenDuration(ticket: Ticket): string {
 }
 
 export function getRowHighlight(ticket: Ticket): string {
-  if (ticket.status === 'סגור') return ''
-  if (!ticket.testDate) return ''
-
-  const testDate = new Date(ticket.testDate)
-  testDate.setHours(23, 59, 59, 0)
-  const now = new Date()
-  const diffMs = testDate.getTime() - now.getTime()
-  const diffDays = diffMs / 86400000
-
-  if (diffDays < 0) return 'bg-red-50 border-r-4 border-red-400'
-  if (diffDays <= 2) return 'bg-yellow-50 border-r-4 border-yellow-400'
+  if (ticket.status === 'סגור') return 'bg-green-50 border-r-4 border-green-400'
   return ''
 }
 
