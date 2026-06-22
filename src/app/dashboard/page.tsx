@@ -111,9 +111,9 @@ export default function DashboardPage() {
         <TicketTable />
       </main>
       {/* Footer */}
-      <footer className="max-w-[1600px] mx-auto px-4 sm:px-6 py-4 mt-6 border-t border-gray-200 flex items-center justify-between text-xs text-gray-400">
-        <span>{COPYRIGHT}</span>
-        <span>v{VERSION} · Build {BUILD} · {BUILD_DATE}</span>
+      <footer className="max-w-[1600px] mx-auto px-4 sm:px-6 py-4 mt-6 border-t border-gray-200 text-center text-xs text-gray-400 space-y-0.5">
+        <p>{COPYRIGHT}</p>
+        <p>v{VERSION} · Build {BUILD} · {BUILD_DATE}</p>
       </footer>
     </div>
   )

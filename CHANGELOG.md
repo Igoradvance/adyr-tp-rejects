@@ -4,6 +4,12 @@
 
 ---
 
+## Build 7 – 2026-06-22
+### תיקון
+- Footer: גרסה מוצגת מתחת לזכויות יוצרים (מרכוז במקום flex RTL)
+
+---
+
 ## Build 6 – 2026-06-22
 ### תיקון
 - תיקון build error בVercel: supabase admin client lazy initialization
