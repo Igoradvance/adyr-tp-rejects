@@ -97,22 +97,26 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   // Fetch tickets
   const fetchTickets = useCallback(async () => {
     setTicketsLoading(true)
-    const { data, error } = await supabase
-      .from('tickets')
-      .select('*')
-      .order('opened_at', { ascending: false })
+    try {
+      const { data, error } = await supabase
+        .from('tickets')
+        .select('*')
+        .order('opened_at', { ascending: false })
 
-    if (!error && data) {
-      if (data.length === 0) {
-        // Seed initial demo data
-        const rows = INITIAL_TICKETS.map(ticketToRow)
-        await supabase.from('tickets').insert(rows)
-        setTickets(INITIAL_TICKETS)
-      } else {
-        setTickets(data.map(rowToTicket))
+      if (!error && data) {
+        if (data.length === 0) {
+          const rows = INITIAL_TICKETS.map(ticketToRow)
+          await supabase.from('tickets').insert(rows)
+          setTickets(INITIAL_TICKETS)
+        } else {
+          setTickets(data.map(rowToTicket))
+        }
       }
+    } catch (_e) {
+      // fail silently
+    } finally {
+      setTicketsLoading(false)
     }
-    setTicketsLoading(false)
   }, [])
 
   useEffect(() => { fetchTickets() }, [fetchTickets])

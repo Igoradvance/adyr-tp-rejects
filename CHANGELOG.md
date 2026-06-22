@@ -4,6 +4,13 @@
 
 ---
 
+## Build 11 – 2026-06-22
+### תיקון
+- fetchTickets עם try/finally — loading תמיד מסתיים
+- /api/users/list עם error logging לדיבאג
+
+---
+
 ## Build 10 – 2026-06-22
 ### תיקון
 - החלפת env variables בVercel ללא BOM (ASCII encoding)

@@ -9,6 +9,9 @@ export async function GET() {
     .select('*')
     .order('created_at', { ascending: true })
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) {
+    console.error('users/list error:', error.message, error.code)
+    return NextResponse.json({ error: error.message, code: error.code }, { status: 500 })
+  }
   return NextResponse.json({ users: data })
 }
