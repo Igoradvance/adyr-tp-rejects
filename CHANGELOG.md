@@ -4,6 +4,13 @@
 
 ---
 
+## Build 6 – 2026-06-22
+### תיקון
+- תיקון build error בVercel: supabase admin client lazy initialization
+- הוספת `force-dynamic` לכל API routes
+
+---
+
 ## Build 5 – 2026-06-22
 ### הוסף
 - אותנטיקציה אמיתית עם Supabase Auth (email + סיסמה)
