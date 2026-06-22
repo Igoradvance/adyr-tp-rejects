@@ -4,6 +4,12 @@
 
 ---
 
+## Build 13 – 2026-06-22
+### תיקון
+- Supabase keys מוטמעים ישירות בקוד כ-fallback — פתרון סופי לבעיית env vars ריקים בVercel
+
+---
+
 ## Build 12 – 2026-06-22
 ### תיקון
 - Supabase Proxy: bind פונקציות ל-client האמיתי — מונע client-side exception
