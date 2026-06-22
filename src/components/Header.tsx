@@ -4,6 +4,7 @@ import { useStore } from '@/lib/store'
 import { useRouter } from 'next/navigation'
 import { LogOut, Plus } from 'lucide-react'
 import NewTicketModal from './NewTicketModal'
+import UserManagement from './UserManagement'
 import { UserRole } from '@/types'
 
 const ROLE_LABELS: Record<UserRole, string> = {
@@ -17,8 +18,10 @@ export default function Header() {
   const { currentUser, logout } = useStore()
   const router = useRouter()
   const [showNew, setShowNew] = useState(false)
+  const [showUsers, setShowUsers] = useState(false)
 
   const canCreate = currentUser?.role === 'super_admin' || currentUser?.role === 'quality_control'
+  const canManageUsers = currentUser?.role === 'super_admin'
 
   return (
     <>
@@ -37,6 +40,15 @@ export default function Header() {
 
           {/* Actions */}
           <div className="flex items-center gap-3">
+            {canManageUsers && (
+              <button
+                onClick={() => setShowUsers(true)}
+                className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-xl text-sm font-semibold hover:bg-gray-200 transition-colors"
+              >
+                <span>👥</span>
+                <span className="hidden sm:inline">משתמשים</span>
+              </button>
+            )}
             {canCreate && (
               <button
                 onClick={() => setShowNew(true)}
@@ -75,6 +87,7 @@ export default function Header() {
       </header>
 
       {showNew && <NewTicketModal onClose={() => setShowNew(false)} />}
+      {showUsers && <UserManagement onClose={() => setShowUsers(false)} />}
     </>
   )
 }
