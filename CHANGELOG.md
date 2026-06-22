@@ -4,6 +4,13 @@
 
 ---
 
+## Build 15 – 2026-06-22
+### תיקון
+- הסרת Proxy מ-supabase.ts — createClient ישיר עם keys קשיחים
+- next.config: missingSuspenseWithCSRBailout false
+
+---
+
 ## Build 14 – 2026-06-22
 ### תיקון
 - refreshUsers עם try/catch — לא חוסם את ה-store אם /api/users/list נכשל

@@ -1,28 +1,10 @@
-import { createClient, SupabaseClient } from '@supabase/supabase-js'
+import { createClient } from '@supabase/supabase-js'
 import { Ticket } from '@/types'
 
-let _client: SupabaseClient | null = null
-
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://vdnbavacjilmgxijarkv.supabase.co'
-const SUPABASE_ANON = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZkbmJhdmFjamlsbWd4aWphcmt2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIwODE1ODYsImV4cCI6MjA5NzY1NzU4Nn0.qczuPeUXbCdNMxm3vrj_5XoRt19l-AkuFW3ARdRdnUA'
-
-export function getSupabase(): SupabaseClient {
-  if (!_client) {
-    _client = createClient(SUPABASE_URL, SUPABASE_ANON)
-  }
-  return _client
-}
-
-export const supabase = new Proxy({} as SupabaseClient, {
-  get(_t, prop, _receiver) {
-    const client = getSupabase()
-    const value = (client as unknown as Record<string | symbol, unknown>)[prop]
-    if (typeof value === 'function') {
-      return (value as Function).bind(client)
-    }
-    return value
-  },
-})
+export const supabase = createClient(
+  'https://vdnbavacjilmgxijarkv.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZkbmJhdmFjamlsbWd4aWphcmt2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIwODE1ODYsImV4cCI6MjA5NzY1NzU4Nn0.qczuPeUXbCdNMxm3vrj_5XoRt19l-AkuFW3ARdRdnUA'
+)
 
 // Map DB row (snake_case) → Ticket (camelCase)
 export function rowToTicket(row: Record<string, unknown>): Ticket {
