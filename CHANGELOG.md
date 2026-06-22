@@ -4,6 +4,12 @@
 
 ---
 
+## Build 12 – 2026-06-22
+### תיקון
+- Supabase Proxy: bind פונקציות ל-client האמיתי — מונע client-side exception
+
+---
+
 ## Build 11 – 2026-06-22
 ### תיקון
 - fetchTickets עם try/finally — loading תמיד מסתיים
