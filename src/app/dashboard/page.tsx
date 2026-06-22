@@ -26,7 +26,7 @@ const STATUS_COLORS: Record<string, string> = {
 }
 
 export default function DashboardPage() {
-  const { currentUser, tickets, filters, setFilters, selectedIds, loading } = useStore()
+  const { currentUser, tickets, filters, setFilters, selectedIds, ticketsLoading: loading } = useStore()
   const router = useRouter()
 
   useEffect(() => {

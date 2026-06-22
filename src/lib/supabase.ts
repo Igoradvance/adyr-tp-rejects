@@ -1,10 +1,21 @@
-import { createClient } from '@supabase/supabase-js'
+import { createClient, SupabaseClient } from '@supabase/supabase-js'
 import { Ticket } from '@/types'
 
-const url = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-
-export const supabase = createClient(url, key)
+let _client: SupabaseClient | null = null
+export function getSupabase(): SupabaseClient {
+  if (!_client) {
+    _client = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    )
+  }
+  return _client
+}
+export const supabase = new Proxy({} as SupabaseClient, {
+  get(_t, prop) {
+    return (getSupabase() as unknown as Record<string | symbol, unknown>)[prop]
+  },
+})
 
 // Map DB row (snake_case) → Ticket (camelCase)
 export function rowToTicket(row: Record<string, unknown>): Ticket {
