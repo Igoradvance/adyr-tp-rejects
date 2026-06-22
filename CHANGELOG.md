@@ -4,6 +4,13 @@
 
 ---
 
+## Build 9 – 2026-06-22
+### תיקון
+- Supabase client lazy initialization (Proxy) — מניעת build crash בVercel
+- תיקון שם משתנה loading בדשבורד
+
+---
+
 ## Build 8 – 2026-06-22
 ### הוסף
 - גרסה וזכויות יוצרים בתחתית דף ההתחברות
