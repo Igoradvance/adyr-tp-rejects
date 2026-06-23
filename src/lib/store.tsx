@@ -214,14 +214,13 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const updateStatus = useCallback(async (id: string, status: Status) => {
     if (!currentUser) return
     const now = new Date().toISOString()
-    setTickets(prev => prev.map(t => {
-      if (t.id !== id) return t
-      const change: StatusChange = { id: generateId(), ticketId: id, userId: currentUser.id, userName: currentUser.name, oldStatus: t.status, newStatus: status, createdAt: now }
-      const updated = { ...t, status, updatedAt: now, closedAt: status === 'סגור' ? now : t.closedAt, statusHistory: [...t.statusHistory, change] }
-      supabase.from('tickets').update(ticketToRow(updated)).eq('id', id)
-      return updated
-    }))
-  }, [currentUser])
+    const ticket = tickets.find(t => t.id === id)
+    if (!ticket) return
+    const change: StatusChange = { id: generateId(), ticketId: id, userId: currentUser.id, userName: currentUser.name, oldStatus: ticket.status, newStatus: status, createdAt: now }
+    const updated = { ...ticket, status, updatedAt: now, closedAt: status === 'סגור' ? now : ticket.closedAt, statusHistory: [...ticket.statusHistory, change] }
+    setTickets(prev => prev.map(t => t.id === id ? updated : t))
+    await supabase.from('tickets').update(ticketToRow(updated)).eq('id', id)
+  }, [currentUser, tickets])
 
   const bulkUpdateStatus = useCallback(async (ids: string[], status: Status) => {
     if (!currentUser) return
@@ -238,13 +237,16 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const addChat = useCallback(async (ticketId: string, message: string) => {
     if (!currentUser) return
     const msg: ChatMessage = { id: generateId(), ticketId, userId: currentUser.id, userName: currentUser.name, userRole: currentUser.role, message, createdAt: new Date().toISOString() }
+    const now = new Date().toISOString()
     setTickets(prev => prev.map(t => {
       if (t.id !== ticketId) return t
-      const updated = { ...t, chatMessages: [...t.chatMessages, msg], updatedAt: new Date().toISOString() }
-      supabase.from('tickets').update({ chat_messages: updated.chatMessages, updated_at: updated.updatedAt }).eq('id', ticketId)
-      return updated
+      return { ...t, chatMessages: [...t.chatMessages, msg], updatedAt: now }
     }))
-  }, [currentUser])
+    const ticket = tickets.find(t => t.id === ticketId)
+    if (!ticket) return
+    const newMessages = [...ticket.chatMessages, msg]
+    await supabase.from('tickets').update({ chat_messages: newMessages, updated_at: now }).eq('id', ticketId)
+  }, [currentUser, tickets])
 
   const toggleSelect = useCallback((id: string) => {
     setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id])
