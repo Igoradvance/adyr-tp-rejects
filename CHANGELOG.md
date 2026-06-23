@@ -4,6 +4,12 @@
 
 ---
 
+## Build 25 – 2026-06-23
+### שיפור
+- Realtime: עדכון נקודתי של טיקט בודד במקום fetch מלא של כל הטיקטים — צ'אט responsive בזמן אמת
+
+---
+
 ## Build 24 – 2026-06-23
 ### תיקון
 - צ'אט לא נשמר ב-DB: תיקון קריטי — addChat ו-updateStatus קראו לסופאבייס בתוך setTickets ללא await (Supabase v2 lazy queries)

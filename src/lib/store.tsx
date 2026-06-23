@@ -121,10 +121,18 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   // Realtime
   useEffect(() => {
     const ch = supabase.channel('tickets-rt')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'tickets' }, fetchTickets)
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'tickets' }, (payload) => {
+        setTickets(prev => [rowToTicket(payload.new as Record<string, unknown>), ...prev])
+      })
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'tickets' }, (payload) => {
+        setTickets(prev => prev.map(t => t.id === (payload.new as Record<string, unknown>).id ? rowToTicket(payload.new as Record<string, unknown>) : t))
+      })
+      .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'tickets' }, (payload) => {
+        setTickets(prev => prev.filter(t => t.id !== (payload.old as Record<string, unknown>).id))
+      })
       .subscribe()
     return () => { supabase.removeChannel(ch) }
-  }, [fetchTickets])
+  }, [])
 
   // Load users for assignment dropdowns
   useEffect(() => { refreshUsers() }, [refreshUsers])
