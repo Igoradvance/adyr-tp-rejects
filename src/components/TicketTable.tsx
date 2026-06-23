@@ -8,7 +8,7 @@ import { formatDate, getOpenDuration, getRowHighlight, markMessagesRead, getRead
 import { MessageSquare, Clock, ArrowUpDown } from 'lucide-react'
 import { Ticket } from '@/types'
 
-type SortKey = keyof Pick<Ticket, 'ticketNumber' | 'contractor' | 'status' | 'priority' | 'targetDate' | 'testDate' | 'openedAt'>
+type SortKey = keyof Pick<Ticket, 'ticketNumber' | 'contractor' | 'status' | 'priority' | 'targetDate' | 'testDate' | 'openedAt' | 'updatedAt'>
 
 const PRIORITY_ORDER = { 'גבוהה': 0, 'בינונית': 1, 'נמוכה': 2 }
 const STATUS_ORDER = { 'פתוח': 0, 'בטיפול': 1, 'ממתין לאישור': 2, 'סגור': 3 }
@@ -17,7 +17,7 @@ export default function TicketTable() {
   const { filteredTickets, selectedIds, toggleSelect, selectAll, clearSelection, currentUser } = useStore()
   const [openTicketId, setOpenTicketId] = useState<string | null>(null)
   const [sessionReadCounts, setSessionReadCounts] = useState<Record<string, number>>({})
-  const [sortKey, setSortKey] = useState<SortKey>('openedAt')
+  const [sortKey, setSortKey] = useState<SortKey>('updatedAt')
   const [sortAsc, setSortAsc] = useState(false)
 
   const handleSort = useCallback((key: SortKey) => {
@@ -82,6 +82,7 @@ export default function TicketTable() {
                   <Th label="תאריך יעד" field="targetDate" />
                   <Th label="תאריך טסט" field="testDate" />
                   <Th label="זמן פתוח" field="openedAt" />
+                  <Th label="עדכון אחרון" field="updatedAt" />
                   <Th label="" />
                 </tr>
               </thead>
@@ -166,6 +167,10 @@ export default function TicketTable() {
                           <Clock size={11} />
                           {getOpenDuration(ticket)}
                         </span>
+                      </td>
+
+                      <td className="px-4 py-3 text-xs text-gray-400 whitespace-nowrap">
+                        {formatDate(ticket.updatedAt)}
                       </td>
 
                       <td className="px-4 py-3">
