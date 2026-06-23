@@ -27,6 +27,7 @@ interface StoreContextType {
   updateStatus: (id: string, status: Status) => Promise<void>
   bulkUpdateStatus: (ids: string[], status: Status) => Promise<void>
   addChat: (ticketId: string, message: string) => Promise<void>
+  deleteChat: (ticketId: string, messageId: string) => Promise<void>
   toggleSelect: (id: string) => void
   selectAll: () => void
   clearSelection: () => void
@@ -268,6 +269,15 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     await supabase.from('tickets').update({ chat_messages: newMessages, updated_at: now }).eq('id', ticketId)
   }, [currentUser, tickets])
 
+  const deleteChat = useCallback(async (ticketId: string, messageId: string) => {
+    const ticket = tickets.find(t => t.id === ticketId)
+    if (!ticket) return
+    const newMessages = ticket.chatMessages.filter(m => m.id !== messageId)
+    const now = new Date().toISOString()
+    setTickets(prev => prev.map(t => t.id === ticketId ? { ...t, chatMessages: newMessages, updatedAt: now } : t))
+    await supabase.from('tickets').update({ chat_messages: newMessages, updated_at: now }).eq('id', ticketId)
+  }, [tickets])
+
   const toggleSelect = useCallback((id: string) => {
     setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id])
   }, [])
@@ -281,7 +291,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       currentUser, authLoading, login, logout,
       tickets, filteredTickets, selectedIds, filters, users, ticketsLoading,
       refreshUsers, createTicket, updateTicket, deleteTicket, updateStatus, bulkUpdateStatus,
-      addChat, toggleSelect, selectAll, clearSelection, setFilters,
+      addChat, deleteChat, toggleSelect, selectAll, clearSelection, setFilters,
     }}>
       {children}
     </Ctx.Provider>

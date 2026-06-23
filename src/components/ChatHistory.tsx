@@ -3,7 +3,7 @@ import { useState, useRef, useEffect } from 'react'
 import { ChatMessage, UserRole } from '@/types'
 import { useStore } from '@/lib/store'
 import { formatDateTime, markMessagesRead } from '@/lib/utils'
-import { Send } from 'lucide-react'
+import { Send, Trash2 } from 'lucide-react'
 
 const ROLE_LABELS: Record<UserRole, string> = {
   super_admin: 'סופר אדמין',
@@ -18,9 +18,12 @@ interface Props {
 }
 
 export default function ChatHistory({ ticketId, messages }: Props) {
-  const { addChat, currentUser } = useStore()
+  const { addChat, deleteChat, currentUser } = useStore()
   const [text, setText] = useState('')
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
+
+  const canDelete = currentUser?.role === 'super_admin' || currentUser?.role === 'quality_control'
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -31,6 +34,11 @@ export default function ChatHistory({ ticketId, messages }: Props) {
     if (!text.trim()) return
     addChat(ticketId, text.trim())
     setText('')
+  }
+
+  const handleDelete = async (msgId: string) => {
+    await deleteChat(ticketId, msgId)
+    setConfirmDeleteId(null)
   }
 
   return (
@@ -44,6 +52,7 @@ export default function ChatHistory({ ticketId, messages }: Props) {
           ) : (
             messages.map(msg => {
               const isMe = msg.userId === currentUser?.id
+              const isConfirming = confirmDeleteId === msg.id
               return (
                 <div key={msg.id} className={`flex flex-col gap-1 ${isMe ? 'items-end' : 'items-start'}`}>
                   <div className="flex items-center gap-2 text-xs text-gray-400">
@@ -61,12 +70,38 @@ export default function ChatHistory({ ticketId, messages }: Props) {
                       </>
                     )}
                   </div>
-                  <div className={`max-w-[85%] px-3 py-2 rounded-2xl text-sm leading-relaxed ${
-                    isMe
-                      ? 'bg-blue-600 text-white rounded-tl-sm'
-                      : 'bg-white text-gray-800 border border-gray-200 rounded-tr-sm'
-                  }`}>
-                    {msg.message}
+                  <div className="flex items-end gap-1.5">
+                    {canDelete && !isMe && (
+                      isConfirming ? (
+                        <div className="flex items-center gap-1 mb-1">
+                          <button onClick={() => handleDelete(msg.id)} className="text-xs px-2 py-0.5 bg-red-500 text-white rounded-lg hover:bg-red-600">מחק</button>
+                          <button onClick={() => setConfirmDeleteId(null)} className="text-xs px-2 py-0.5 bg-gray-200 text-gray-600 rounded-lg hover:bg-gray-300">ביטול</button>
+                        </div>
+                      ) : (
+                        <button onClick={() => setConfirmDeleteId(msg.id)} className="mb-1 p-1 text-gray-300 hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100">
+                          <Trash2 size={12} />
+                        </button>
+                      )
+                    )}
+                    {canDelete && isMe && (
+                      isConfirming ? (
+                        <div className="flex items-center gap-1 mb-1 order-first">
+                          <button onClick={() => setConfirmDeleteId(null)} className="text-xs px-2 py-0.5 bg-gray-200 text-gray-600 rounded-lg hover:bg-gray-300">ביטול</button>
+                          <button onClick={() => handleDelete(msg.id)} className="text-xs px-2 py-0.5 bg-red-500 text-white rounded-lg hover:bg-red-600">מחק</button>
+                        </div>
+                      ) : (
+                        <button onClick={() => setConfirmDeleteId(msg.id)} className="mb-1 p-1 text-gray-300 hover:text-red-400 transition-colors order-first">
+                          <Trash2 size={12} />
+                        </button>
+                      )
+                    )}
+                    <div className={`max-w-[85%] px-3 py-2 rounded-2xl text-sm leading-relaxed ${
+                      isMe
+                        ? 'bg-blue-600 text-white rounded-tl-sm'
+                        : 'bg-white text-gray-800 border border-gray-200 rounded-tr-sm'
+                    }`}>
+                      {msg.message}
+                    </div>
                   </div>
                 </div>
               )
