@@ -118,6 +118,18 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => { fetchTickets() }, [fetchTickets])
 
+  // Silent background polling fallback (in case realtime isn't enabled on the table)
+  useEffect(() => {
+    const interval = setInterval(async () => {
+      const { data, error } = await supabase
+        .from('tickets')
+        .select('*')
+        .order('updated_at', { ascending: false })
+      if (!error && data) setTickets(data.map(rowToTicket))
+    }, 20000)
+    return () => clearInterval(interval)
+  }, [])
+
   // Realtime
   useEffect(() => {
     const ch = supabase.channel('tickets-rt')
