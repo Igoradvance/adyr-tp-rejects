@@ -4,7 +4,7 @@ import { useStore } from '@/lib/store'
 import StatusBadge from './StatusBadge'
 import PriorityBadge from './PriorityBadge'
 import TicketModal from './TicketModal'
-import { formatDate, getOpenDuration, getRowHighlight, markMessagesRead, hasUnreadMessages } from '@/lib/utils'
+import { formatDate, getOpenDuration, getRowHighlight, markMessagesRead, getReadCount } from '@/lib/utils'
 import { MessageSquare, Clock, ArrowUpDown } from 'lucide-react'
 import { Ticket } from '@/types'
 
@@ -16,7 +16,7 @@ const STATUS_ORDER = { 'פתוח': 0, 'בטיפול': 1, 'ממתין לאישו�
 export default function TicketTable() {
   const { filteredTickets, selectedIds, toggleSelect, selectAll, clearSelection, currentUser } = useStore()
   const [openTicketId, setOpenTicketId] = useState<string | null>(null)
-  const [sessionRead, setSessionRead] = useState<Set<string>>(new Set())
+  const [sessionReadCounts, setSessionReadCounts] = useState<Record<string, number>>({})
   const [sortKey, setSortKey] = useState<SortKey>('openedAt')
   const [sortAsc, setSortAsc] = useState(false)
 
@@ -89,12 +89,15 @@ export default function TicketTable() {
                 {sorted.map(ticket => {
                   const highlight = getRowHighlight(ticket)
                   const selected = selectedIds.includes(ticket.id)
-                  const unread = !!currentUser && !sessionRead.has(ticket.id) && hasUnreadMessages(ticket.chatMessages.length, currentUser.id, ticket.id)
+                  const effectiveReadCount = currentUser
+                    ? (ticket.id in sessionReadCounts ? sessionReadCounts[ticket.id] : getReadCount(currentUser.id, ticket.id))
+                    : 0
+                  const unread = !!currentUser && ticket.chatMessages.length > effectiveReadCount
 
                   const handleOpen = () => {
                     if (currentUser) {
                       markMessagesRead(currentUser.id, ticket.id, ticket.chatMessages.length)
-                      setSessionRead(prev => new Set([...prev, ticket.id]))
+                      setSessionReadCounts(prev => ({ ...prev, [ticket.id]: ticket.chatMessages.length }))
                     }
                     setOpenTicketId(ticket.id)
                   }
