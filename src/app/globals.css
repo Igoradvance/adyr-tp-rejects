@@ -10,6 +10,15 @@ body {
   direction: rtl;
 }
 
+/* Unread chat pulse */
+@keyframes pulse-blue {
+  0%, 100% { background-color: transparent; }
+  50% { background-color: rgb(219 234 254 / 0.7); }
+}
+.animate-pulse-blue {
+  animation: pulse-blue 2s ease-in-out infinite;
+}
+
 /* Custom scrollbar */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: #f1f5f9; }

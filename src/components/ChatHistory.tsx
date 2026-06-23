@@ -2,7 +2,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { ChatMessage, UserRole } from '@/types'
 import { useStore } from '@/lib/store'
-import { formatDateTime } from '@/lib/utils'
+import { formatDateTime, markMessagesRead } from '@/lib/utils'
 import { Send } from 'lucide-react'
 
 const ROLE_LABELS: Record<UserRole, string> = {
@@ -24,7 +24,8 @@ export default function ChatHistory({ ticketId, messages }: Props) {
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages])
+    if (currentUser) markMessagesRead(currentUser.id, ticketId, messages.length)
+  }, [messages, currentUser, ticketId])
 
   const send = () => {
     if (!text.trim()) return

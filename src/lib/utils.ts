@@ -31,6 +31,20 @@ export function getRowHighlight(ticket: Ticket): string {
   return ''
 }
 
+export function getReadCount(userId: string, ticketId: string): number {
+  if (typeof window === 'undefined') return 0
+  return parseInt(localStorage.getItem(`read_${userId}_${ticketId}`) || '0', 10)
+}
+
+export function markMessagesRead(userId: string, ticketId: string, count: number) {
+  if (typeof window === 'undefined') return
+  localStorage.setItem(`read_${userId}_${ticketId}`, String(count))
+}
+
+export function hasUnreadMessages(chatCount: number, userId: string, ticketId: string): boolean {
+  return chatCount > 0 && chatCount > getReadCount(userId, ticketId)
+}
+
 export function generateId(): string {
   return Math.random().toString(36).slice(2, 9) + Date.now().toString(36)
 }

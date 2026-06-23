@@ -4,7 +4,7 @@ import { useStore } from '@/lib/store'
 import StatusBadge from './StatusBadge'
 import PriorityBadge from './PriorityBadge'
 import TicketModal from './TicketModal'
-import { formatDate, getOpenDuration, getRowHighlight } from '@/lib/utils'
+import { formatDate, getOpenDuration, getRowHighlight, markMessagesRead, hasUnreadMessages } from '@/lib/utils'
 import { MessageSquare, Clock, ArrowUpDown } from 'lucide-react'
 import { Ticket } from '@/types'
 
@@ -16,6 +16,7 @@ const STATUS_ORDER = { 'פתוח': 0, 'בטיפול': 1, 'ממתין לאישו�
 export default function TicketTable() {
   const { filteredTickets, selectedIds, toggleSelect, selectAll, clearSelection, currentUser } = useStore()
   const [openTicketId, setOpenTicketId] = useState<string | null>(null)
+  const [sessionRead, setSessionRead] = useState<Set<string>>(new Set())
   const [sortKey, setSortKey] = useState<SortKey>('openedAt')
   const [sortAsc, setSortAsc] = useState(false)
 
@@ -88,12 +89,21 @@ export default function TicketTable() {
                 {sorted.map(ticket => {
                   const highlight = getRowHighlight(ticket)
                   const selected = selectedIds.includes(ticket.id)
+                  const unread = !!currentUser && !sessionRead.has(ticket.id) && hasUnreadMessages(ticket.chatMessages.length, currentUser.id, ticket.id)
+
+                  const handleOpen = () => {
+                    if (currentUser) {
+                      markMessagesRead(currentUser.id, ticket.id, ticket.chatMessages.length)
+                      setSessionRead(prev => new Set([...prev, ticket.id]))
+                    }
+                    setOpenTicketId(ticket.id)
+                  }
 
                   return (
                     <tr
                       key={ticket.id}
-                      onClick={() => setOpenTicketId(ticket.id)}
-                      className={`cursor-pointer transition-colors hover:bg-blue-50/30 ${highlight} ${selected ? 'bg-blue-50' : ''}`}
+                      onClick={handleOpen}
+                      className={`cursor-pointer transition-colors hover:bg-blue-50/30 ${unread ? 'animate-pulse-blue' : highlight} ${selected ? 'bg-blue-50' : ''}`}
                     >
                       <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
                         <input
