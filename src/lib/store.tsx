@@ -126,7 +126,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         .select('*')
         .order('updated_at', { ascending: false })
       if (!error && data) setTickets(data.map(rowToTicket))
-    }, 20000)
+    }, 10000)
     return () => clearInterval(interval)
   }, [])
 
