@@ -8,6 +8,8 @@ import Filters from '@/components/Filters'
 import BulkActions from '@/components/BulkActions'
 import TicketTable from '@/components/TicketTable'
 import { Status } from '@/types'
+import { exportToExcel } from '@/lib/exportExcel'
+import { FileSpreadsheet } from 'lucide-react'
 
 type Tab = { label: string; value: Status | 'all' }
 const TABS: Tab[] = [
@@ -74,6 +76,19 @@ export default function DashboardPage() {
             </button>
           ))}
         </div>
+
+        {/* Export button */}
+        {(currentUser.role === 'super_admin' || currentUser.role === 'quality_control') && (
+          <div className="flex justify-end mb-3">
+            <button
+              onClick={() => exportToExcel(visibleTickets, currentUser.name)}
+              className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-xl text-sm font-semibold hover:bg-green-700 transition-colors shadow-sm"
+            >
+              <FileSpreadsheet size={15} />
+              ייצוא לאקסל + KPI
+            </button>
+          </div>
+        )}
 
         {/* Tabs */}
         <div className="bg-white rounded-t-xl border border-gray-200 flex overflow-x-auto">
