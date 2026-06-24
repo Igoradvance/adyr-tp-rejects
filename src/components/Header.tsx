@@ -2,7 +2,7 @@
 import { useState } from 'react'
 import { useStore } from '@/lib/store'
 import { useRouter } from 'next/navigation'
-import { LogOut, Plus, KeyRound } from 'lucide-react'
+import { LogOut, Plus, KeyRound, BarChart2 } from 'lucide-react'
 import NewTicketModal from './NewTicketModal'
 import UserManagement from './UserManagement'
 import { UserRole } from '@/types'
@@ -57,6 +57,16 @@ export default function Header() {
 
           {/* Actions */}
           <div className="flex items-center gap-3">
+            {(currentUser?.role === 'super_admin' || currentUser?.role === 'quality_control') && (
+              <button
+                onClick={() => router.push('/kpi')}
+                className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-xl text-sm font-semibold hover:bg-gray-200 transition-colors"
+                title="דשבורד KPI"
+              >
+                <BarChart2 size={15} />
+                <span className="hidden sm:inline">KPI</span>
+              </button>
+            )}
             {canManageUsers && (
               <button
                 onClick={() => setShowUsers(true)}
