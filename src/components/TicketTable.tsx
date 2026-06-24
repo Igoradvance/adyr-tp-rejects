@@ -8,7 +8,7 @@ import { formatDate, getOpenDuration, getRowHighlight, markMessagesRead, getRead
 import { MessageSquare, Clock, ArrowUpDown } from 'lucide-react'
 import { Ticket } from '@/types'
 
-type SortKey = keyof Pick<Ticket, 'ticketNumber' | 'contractor' | 'status' | 'priority' | 'targetDate' | 'testDate' | 'openedAt' | 'updatedAt'>
+type SortKey = keyof Pick<Ticket, 'ticketNumber' | 'contractor' | 'status' | 'priority' | 'targetDate' | 'testDate' | 'openedAt' | 'updatedAt'> | 'chatCount'
 
 const PRIORITY_ORDER = { 'גבוהה': 0, 'בינונית': 1, 'נמוכה': 2 }
 const STATUS_ORDER = { 'פתוח': 0, 'בטיפול': 1, 'ממתין לאישור': 2, 'סגור': 3 }
@@ -32,6 +32,7 @@ export default function TicketTable() {
     let bv: string | number = ''
     if (sortKey === 'priority') { av = PRIORITY_ORDER[a.priority]; bv = PRIORITY_ORDER[b.priority] }
     else if (sortKey === 'status') { av = STATUS_ORDER[a.status]; bv = STATUS_ORDER[b.status] }
+    else if (sortKey === 'chatCount') { av = a.chatMessages.length; bv = b.chatMessages.length }
     else { av = a[sortKey] || ''; bv = b[sortKey] || '' }
     const cmp = av < bv ? -1 : av > bv ? 1 : 0
     return sortAsc ? cmp : -cmp
@@ -83,7 +84,7 @@ export default function TicketTable() {
                   <Th label="תאריך טסט" field="testDate" />
                   <Th label="זמן פתוח" field="openedAt" />
                   <Th label="עדכון אחרון" field="updatedAt" />
-                  <Th label="" />
+                  <Th label="הודעות" field="chatCount" />
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
@@ -174,11 +175,13 @@ export default function TicketTable() {
                       </td>
 
                       <td className="px-4 py-3">
-                        {ticket.chatMessages.length > 0 && (
-                          <span className="flex items-center gap-1 text-xs text-gray-400">
+                        {ticket.chatMessages.length > 0 ? (
+                          <span className="flex items-center gap-1 text-xs font-medium text-blue-600">
                             <MessageSquare size={12} />
                             {ticket.chatMessages.length}
                           </span>
+                        ) : (
+                          <span className="text-gray-300 text-xs">—</span>
                         )}
                       </td>
                     </tr>
