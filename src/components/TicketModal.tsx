@@ -146,13 +146,13 @@ export default function TicketModal({ ticketId, onClose }: Props) {
                 ) : (
                   <div
                     onClick={() => setEditMode(true)}
-                    className="text-gray-800 text-sm bg-gray-50 hover:bg-gray-100 rounded-xl p-4 leading-relaxed cursor-pointer border-2 border-dashed border-transparent hover:border-gray-300 transition-all"
+                    className="text-gray-800 text-sm bg-gray-50 hover:bg-gray-100 rounded-xl p-4 leading-relaxed cursor-pointer border-2 border-dashed border-transparent hover:border-gray-300 transition-all whitespace-pre-wrap"
                   >
                     {ticket.description || <span className="text-gray-400">לחץ להזנת תיאור התקלה...</span>}
                   </div>
                 )
               ) : (
-                <p className="text-gray-800 text-sm bg-blue-50 border border-blue-100 rounded-xl p-4 leading-relaxed">
+                <p className="text-gray-800 text-sm bg-blue-50 border border-blue-100 rounded-xl p-4 leading-relaxed whitespace-pre-wrap">
                   {ticket.description || <span className="text-gray-400">—</span>}
                 </p>
               )}
