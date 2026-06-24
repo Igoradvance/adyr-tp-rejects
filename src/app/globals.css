@@ -12,11 +12,11 @@ body {
 
 /* Unread chat pulse */
 @keyframes pulse-blue {
-  0%, 100% { background-color: transparent; }
-  50% { background-color: rgb(219 234 254 / 0.7); }
+  0%, 100% { background-color: rgb(239 246 255); }
+  50% { background-color: rgb(147 197 253); }
 }
 .animate-pulse-blue {
-  animation: pulse-blue 2s ease-in-out infinite;
+  animation: pulse-blue 3s ease-in-out infinite;
 }
 
 /* Custom scrollbar */
