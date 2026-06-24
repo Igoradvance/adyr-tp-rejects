@@ -9,6 +9,7 @@ const ROLE_LABELS: Record<UserRole, string> = {
   quality_control: 'בקרת איכות',
   contractor_pm: 'מנהל פרוייקט קבלן',
   contractor_employee: 'עובד קבלן',
+  viewer: 'צפייה בלבד',
 }
 
 const ROLE_COLORS: Record<UserRole, string> = {
@@ -16,6 +17,7 @@ const ROLE_COLORS: Record<UserRole, string> = {
   quality_control: 'bg-green-100 text-green-700',
   contractor_pm: 'bg-blue-100 text-blue-700',
   contractor_employee: 'bg-gray-100 text-gray-600',
+  viewer: 'bg-yellow-100 text-yellow-700',
 }
 
 const ROLES_NEEDING_CONTRACTOR: UserRole[] = ['contractor_pm', 'contractor_employee']

@@ -13,6 +13,7 @@ const ROLE_LABELS: Record<UserRole, string> = {
   quality_control: 'בקרת איכות',
   contractor_pm: 'מנהל פרוייקט',
   contractor_employee: 'עובד קבלן',
+  viewer: 'צפייה בלבד',
 }
 
 export default function Header() {
@@ -35,7 +36,8 @@ export default function Header() {
     else { setPwMsg('הסיסמה עודכנה בהצלחה!'); setNewPassword(''); setTimeout(() => { setShowPassword(false); setPwMsg('') }, 1500) }
   }
 
-  const canCreate = currentUser?.role === 'super_admin' || currentUser?.role === 'quality_control'
+  const isViewer = currentUser?.role === 'viewer'
+  const canCreate = !isViewer && (currentUser?.role === 'super_admin' || currentUser?.role === 'quality_control')
   const canManageUsers = currentUser?.role === 'super_admin'
 
   return (

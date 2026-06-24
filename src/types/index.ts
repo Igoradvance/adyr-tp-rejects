@@ -2,7 +2,7 @@ export type Contractor = 'TMT' | 'EBS'
 export type Status = 'פתוח' | 'בטיפול' | 'ממתין לאישור' | 'סגור'
 export type Priority = 'גבוהה' | 'בינונית' | 'נמוכה'
 export type TestPhase = 'לפני טסט' | 'אחרי טסט'
-export type UserRole = 'super_admin' | 'quality_control' | 'contractor_pm' | 'contractor_employee'
+export type UserRole = 'super_admin' | 'quality_control' | 'contractor_pm' | 'contractor_employee' | 'viewer'
 
 export interface User {
   id: string

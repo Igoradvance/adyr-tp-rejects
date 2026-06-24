@@ -165,7 +165,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     if (currentUser.role === 'contractor_pm' || currentUser.role === 'contractor_employee') {
       return t.contractor === currentUser.contractor
     }
-    return true
+    return true // super_admin, quality_control, viewer see all
   })
 
   const filteredTickets = visibleTickets.filter(t => {

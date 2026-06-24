@@ -23,6 +23,7 @@ export default function ChatHistory({ ticketId, messages }: Props) {
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
 
+  const isViewer = currentUser?.role === 'viewer'
   const canDelete = currentUser?.role === 'super_admin' || currentUser?.role === 'quality_control'
 
   useEffect(() => {
@@ -110,23 +111,30 @@ export default function ChatHistory({ ticketId, messages }: Props) {
           <div ref={bottomRef} />
         </div>
 
-        <div className="border-t border-gray-200 flex items-center gap-2 p-2 bg-white">
-          <input
-            type="text"
-            value={text}
-            onChange={e => setText(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && !e.shiftKey && send()}
-            placeholder="כתוב הודעה ולחץ Enter..."
-            className="flex-1 px-3 py-1.5 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-colors"
-          />
-          <button
-            onClick={send}
-            disabled={!text.trim()}
-            className="p-1.5 bg-blue-600 text-white rounded-lg disabled:opacity-40 hover:bg-blue-700 transition-colors flex-shrink-0"
-          >
-            <Send size={15} />
-          </button>
-        </div>
+        {!isViewer && (
+          <div className="border-t border-gray-200 flex items-center gap-2 p-2 bg-white">
+            <input
+              type="text"
+              value={text}
+              onChange={e => setText(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && !e.shiftKey && send()}
+              placeholder="כתוב הודעה ולחץ Enter..."
+              className="flex-1 px-3 py-1.5 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-colors"
+            />
+            <button
+              onClick={send}
+              disabled={!text.trim()}
+              className="p-1.5 bg-blue-600 text-white rounded-lg disabled:opacity-40 hover:bg-blue-700 transition-colors flex-shrink-0"
+            >
+              <Send size={15} />
+            </button>
+          </div>
+        )}
+        {isViewer && (
+          <div className="border-t border-gray-200 p-2 bg-gray-50 text-center text-xs text-gray-400">
+            צפייה בלבד — אין אפשרות לשלוח הודעות
+          </div>
+        )}
       </div>
     </div>
   )

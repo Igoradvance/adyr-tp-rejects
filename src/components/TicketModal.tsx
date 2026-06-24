@@ -33,20 +33,22 @@ export default function TicketModal({ ticketId, onClose }: Props) {
   if (!ticket) return null
 
   const role = currentUser?.role
+  const isViewer = role === 'viewer'
   const isQCOrAdmin = role === 'super_admin' || role === 'quality_control'
   const isContractor = role === 'contractor_pm' || role === 'contractor_employee'
   const isMyContractor = isContractor && ticket.contractor === currentUser?.contractor
 
   const allowedStatuses = (): Status[] => {
+    if (isViewer) return []
     if (isQCOrAdmin) return ['פתוח', 'בטיפול', 'ממתין לאישור', 'סגור']
     if (isMyContractor) return ['בטיפול', 'ממתין לאישור']
     return []
   }
 
-  const canEditFields = isQCOrAdmin
-  const canEditPriority = isQCOrAdmin || role === 'contractor_pm'
-  const canAssign = role === 'super_admin' || (role === 'contractor_pm' && isMyContractor)
-  const canDelete = role === 'super_admin'
+  const canEditFields = !isViewer && isQCOrAdmin
+  const canEditPriority = !isViewer && (isQCOrAdmin || role === 'contractor_pm')
+  const canAssign = !isViewer && (role === 'super_admin' || (role === 'contractor_pm' && isMyContractor))
+  const canDelete = !isViewer && role === 'super_admin'
 
   const contractorUsers = users.filter(u => u.contractor === ticket.contractor)
   const statuses = allowedStatuses()
