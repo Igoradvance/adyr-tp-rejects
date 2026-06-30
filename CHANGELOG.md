@@ -1,6 +1,13 @@
-# CHANGELOG – TP Reject Management System
+﻿# CHANGELOG – TP Reject Management System
 
 כל הזכויות שמורות © Igor Ositchansky – Advance Engineering
+
+---
+
+## Build 37 – 2026-06-30
+### הוסף
+- אינטגרציה עם Quality Tracker (Firestore): בקרת איכות וסופר אדמין רואים נתוני תיק מהמערכת השנייה בתוך חלון התקלה
+- פנל Quality Tracker מציג: סטטוס, קבלן, אחראי, סוג בדיקה, היסטוריית עדכונים
 
 ---
 
@@ -255,3 +262,4 @@
 - צביעת שורות לפי קירבה לתאריך טסט (צהוב/אדום)
 - עדיפות וניהול שיוך לפי הרשאות
 - GitHub + Vercel + Supabase
+

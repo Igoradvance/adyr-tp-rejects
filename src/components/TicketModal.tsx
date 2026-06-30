@@ -7,6 +7,7 @@ import PriorityBadge from './PriorityBadge'
 import ChatHistory from './ChatHistory'
 import { formatDate, formatDateTime, getOpenDuration } from '@/lib/utils'
 import { X, Trash2, Clock, Edit2, Check, ChevronLeft } from 'lucide-react'
+import QualityTrackerPanel from './QualityTrackerPanel'
 
 interface Props {
   ticketId: string
@@ -300,6 +301,11 @@ export default function TicketModal({ ticketId, onClose }: Props) {
                 <span className="text-sm text-gray-700">{ticket.testDate ? formatDate(ticket.testDate) : '—'}</span>
               )}
             </div>
+
+            {/* Quality Tracker Integration */}
+            {isQCOrAdmin && (
+              <QualityTrackerPanel ticketNumber={ticket.ticketNumber} />
+            )}
 
             {/* Metadata */}
             <div className="border-t border-gray-100 pt-4 space-y-2.5">
