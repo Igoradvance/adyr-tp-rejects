@@ -94,12 +94,16 @@ export default function TicketTable() {
                   const effectiveReadCount = currentUser
                     ? (ticket.id in sessionReadCounts ? sessionReadCounts[ticket.id] : getReadCount(currentUser.id, ticket.id))
                     : 0
-                  const unread = !!currentUser && ticket.chatMessages.length > effectiveReadCount
+                  const isQCOrAdmin = currentUser?.role === 'quality_control' || currentUser?.role === 'super_admin'
+                  const relevantMessages = isQCOrAdmin
+                    ? ticket.chatMessages.filter(m => m.userRole !== 'quality_control' && m.userRole !== 'super_admin')
+                    : ticket.chatMessages
+                  const unread = !!currentUser && relevantMessages.length > effectiveReadCount
 
                   const handleOpen = () => {
                     if (currentUser) {
-                      markMessagesRead(currentUser.id, ticket.id, ticket.chatMessages.length)
-                      setSessionReadCounts(prev => ({ ...prev, [ticket.id]: ticket.chatMessages.length }))
+                      markMessagesRead(currentUser.id, ticket.id, relevantMessages.length)
+                      setSessionReadCounts(prev => ({ ...prev, [ticket.id]: relevantMessages.length }))
                     }
                     setOpenTicketId(ticket.id)
                   }
