@@ -8,6 +8,7 @@ const STATUS_COLORS: Record<string, string> = {
   'in_progress': 'bg-yellow-100 text-yellow-700',
   'pending': 'bg-orange-100 text-orange-700',
   'closed': 'bg-green-100 text-green-700',
+  'planning': 'bg-purple-100 text-purple-700',
   'פתוח': 'bg-blue-100 text-blue-700',
   'בטיפול': 'bg-yellow-100 text-yellow-700',
   'ממתין': 'bg-orange-100 text-orange-700',
@@ -17,21 +18,15 @@ const STATUS_COLORS: Record<string, string> = {
 export default function QualityTrackerPanel({ ticketNumber }: { ticketNumber: string }) {
   const [data, setData] = useState<QualityCase | null>(null)
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [debugInfo, setDebugInfo] = useState<string[] | null>(null)
+  const [notFound, setNotFound] = useState(false)
 
   const load = async () => {
     setLoading(true)
-    setError(null)
-    setDebugInfo(null)
+    setNotFound(false)
+    setData(null)
     const result = await fetchQualityCase(ticketNumber)
-    if (result.error) {
-      setError(result.error)
-    } else if (result.data) {
-      setData(result.data)
-    } else {
-      setDebugInfo(result.allCases || [])
-    }
+    if (result) setData(result)
+    else setNotFound(true)
     setLoading(false)
   }
 
@@ -57,8 +52,8 @@ export default function QualityTrackerPanel({ ticketNumber }: { ticketNumber: st
             <div className="w-4 h-4 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin" />
             טוען נתונים...
           </div>
-        ) : error ? (
-          <div className="text-xs text-red-500 bg-red-50 rounded-lg p-2 font-mono break-all">{error}</div>
+        ) : notFound ? (
+          <p className="text-sm text-gray-400 italic">לא נמצא רשומה תואמת ב-Quality Tracker</p>
         ) : data ? (
           <div className="space-y-3">
             <div className="grid grid-cols-2 gap-2 text-sm">
@@ -106,16 +101,6 @@ export default function QualityTrackerPanel({ ticketNumber }: { ticketNumber: st
                 </div>
               </div>
             )}
-          </div>
-        ) : debugInfo !== null ? (
-          <div className="space-y-1">
-            <p className="text-xs text-orange-600 font-semibold">לא נמצא תיק עם caseNumber=&quot;{ticketNumber}&quot;</p>
-            <p className="text-xs text-gray-400">5 רשומות ראשונות בFirestore:</p>
-            {debugInfo.length === 0 ? (
-              <p className="text-xs text-red-400">Collection ריק או אין גישה</p>
-            ) : debugInfo.map((s, i) => (
-              <p key={i} className="text-xs font-mono bg-gray-100 rounded p-1 break-all">{s}</p>
-            ))}
           </div>
         ) : null}
       </div>
