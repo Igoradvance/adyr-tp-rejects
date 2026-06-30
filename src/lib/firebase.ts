@@ -1,5 +1,5 @@
 import { initializeApp, getApps } from 'firebase/app'
-import { getFirestore, collection, query, where, getDocs } from 'firebase/firestore'
+import { getFirestore, collection, getDocs } from 'firebase/firestore'
 import { getAuth, signInAnonymously } from 'firebase/auth'
 
 const firebaseConfig = {
@@ -20,25 +20,31 @@ async function ensureAuth() {
 }
 
 export interface QualityCase {
-  id: string
   caseNumber: string
   status: string
   assignee: string
   contractor: string
   testType: string
   waterBar: string
-  createdAt: string
-  history: { at: string; status: string; assignee: string; note: string; by: string }[]
+  createdAt?: string
+  history?: { at: string; status: string; assignee: string; note: string; by: string }[]
 }
 
 export async function fetchQualityCase(caseNumber: string): Promise<QualityCase | null> {
   try {
     await ensureAuth()
-    const q = query(collection(db, 'quality'), where('caseNumber', '==', caseNumber))
-    const snap = await getDocs(q)
-    if (snap.empty) return null
-    const doc = snap.docs[0]
-    return { id: doc.id, ...doc.data() } as QualityCase
+    const snap = await getDocs(collection(db, 'quality'))
+    for (const doc of snap.docs) {
+      const data = doc.data()
+      // structure: { cases: [{caseNumber, ...}] }
+      if (Array.isArray(data.cases)) {
+        const found = data.cases.find((c: QualityCase) => c.caseNumber === caseNumber)
+        if (found) return found
+      }
+      // fallback: caseNumber directly on document
+      if (data.caseNumber === caseNumber) return data as QualityCase
+    }
+    return null
   } catch {
     return null
   }
