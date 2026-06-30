@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { fetchQualityCase, QualityCase } from '@/lib/firebase'
-import { ExternalLink, RefreshCw, MapPin, Clock } from 'lucide-react'
+import { RefreshCw, MapPin, Clock } from 'lucide-react'
 
 const STATUS_COLORS: Record<string, string> = {
   'open': 'bg-blue-100 text-blue-700',
@@ -17,16 +17,20 @@ const STATUS_COLORS: Record<string, string> = {
 export default function QualityTrackerPanel({ ticketNumber }: { ticketNumber: string }) {
   const [data, setData] = useState<QualityCase | null>(null)
   const [loading, setLoading] = useState(true)
-  const [notFound, setNotFound] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [debugInfo, setDebugInfo] = useState<string[] | null>(null)
 
   const load = async () => {
     setLoading(true)
-    setNotFound(false)
+    setError(null)
+    setDebugInfo(null)
     const result = await fetchQualityCase(ticketNumber)
-    if (result) {
-      setData(result)
+    if (result.error) {
+      setError(result.error)
+    } else if (result.data) {
+      setData(result.data)
     } else {
-      setNotFound(true)
+      setDebugInfo(result.allCases || [])
     }
     setLoading(false)
   }
@@ -53,11 +57,10 @@ export default function QualityTrackerPanel({ ticketNumber }: { ticketNumber: st
             <div className="w-4 h-4 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin" />
             טוען נתונים...
           </div>
-        ) : notFound ? (
-          <p className="text-sm text-gray-400 italic">לא נמצא רשומה תואמת ב-Quality Tracker</p>
+        ) : error ? (
+          <div className="text-xs text-red-500 bg-red-50 rounded-lg p-2 font-mono break-all">{error}</div>
         ) : data ? (
           <div className="space-y-3">
-            {/* Main info */}
             <div className="grid grid-cols-2 gap-2 text-sm">
               <div>
                 <p className="text-xs text-gray-400 mb-0.5">סטטוס</p>
@@ -84,8 +87,6 @@ export default function QualityTrackerPanel({ ticketNumber }: { ticketNumber: st
                 </div>
               )}
             </div>
-
-            {/* History */}
             {data.history && data.history.length > 0 && (
               <div>
                 <p className="text-xs text-gray-400 mb-1.5 flex items-center gap-1">
@@ -105,6 +106,16 @@ export default function QualityTrackerPanel({ ticketNumber }: { ticketNumber: st
                 </div>
               </div>
             )}
+          </div>
+        ) : debugInfo !== null ? (
+          <div className="space-y-1">
+            <p className="text-xs text-orange-600 font-semibold">לא נמצא תיק עם caseNumber=&quot;{ticketNumber}&quot;</p>
+            <p className="text-xs text-gray-400">5 רשומות ראשונות בFirestore:</p>
+            {debugInfo.length === 0 ? (
+              <p className="text-xs text-red-400">Collection ריק או אין גישה</p>
+            ) : debugInfo.map((s, i) => (
+              <p key={i} className="text-xs font-mono bg-gray-100 rounded p-1 break-all">{s}</p>
+            ))}
           </div>
         ) : null}
       </div>

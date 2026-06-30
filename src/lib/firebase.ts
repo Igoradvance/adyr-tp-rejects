@@ -31,15 +31,20 @@ export interface QualityCase {
   history: { at: string; status: string; assignee: string; note: string; by: string }[]
 }
 
-export async function fetchQualityCase(caseNumber: string): Promise<QualityCase | null> {
+export async function fetchQualityCase(caseNumber: string): Promise<{ data: QualityCase | null; error: string | null; allCases?: string[] }> {
   try {
     await ensureAuth()
     const q = query(collection(db, 'quality'), where('caseNumber', '==', caseNumber))
     const snap = await getDocs(q)
-    if (snap.empty) return null
+    if (snap.empty) {
+      // fetch first 5 to debug field names
+      const allSnap = await getDocs(collection(db, 'quality'))
+      const allCases = allSnap.docs.slice(0, 5).map(d => JSON.stringify(d.data()).slice(0, 120))
+      return { data: null, error: null, allCases }
+    }
     const doc = snap.docs[0]
-    return { id: doc.id, ...doc.data() } as QualityCase
-  } catch {
-    return null
+    return { data: { id: doc.id, ...doc.data() } as QualityCase, error: null }
+  } catch (e) {
+    return { data: null, error: String(e) }
   }
 }
