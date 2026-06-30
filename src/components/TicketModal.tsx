@@ -304,7 +304,7 @@ export default function TicketModal({ ticketId, onClose }: Props) {
 
             {/* Quality Tracker Integration */}
             {isQCOrAdmin && (
-              <QualityTrackerPanel ticketNumber={ticket.ticketNumber} />
+              <QualityTrackerPanel ticketNumber={ticket.ticketNumber} contractor={ticket.contractor} />
             )}
 
             {/* Metadata */}

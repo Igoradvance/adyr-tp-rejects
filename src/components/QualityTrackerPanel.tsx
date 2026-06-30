@@ -15,7 +15,7 @@ const STATUS_COLORS: Record<string, string> = {
   'סגור': 'bg-green-100 text-green-700',
 }
 
-export default function QualityTrackerPanel({ ticketNumber }: { ticketNumber: string }) {
+export default function QualityTrackerPanel({ ticketNumber, contractor }: { ticketNumber: string; contractor: string }) {
   const [data, setData] = useState<QualityCase | null>(null)
   const [loading, setLoading] = useState(true)
   const [notFound, setNotFound] = useState(false)
@@ -24,13 +24,13 @@ export default function QualityTrackerPanel({ ticketNumber }: { ticketNumber: st
     setLoading(true)
     setNotFound(false)
     setData(null)
-    const result = await fetchQualityCase(ticketNumber)
+    const result = await fetchQualityCase(ticketNumber, contractor)
     if (result) setData(result)
     else setNotFound(true)
     setLoading(false)
   }
 
-  useEffect(() => { load() }, [ticketNumber]) // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { load() }, [ticketNumber, contractor]) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className="border border-indigo-200 rounded-xl bg-indigo-50/50 overflow-hidden">

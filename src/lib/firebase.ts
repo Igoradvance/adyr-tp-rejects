@@ -30,19 +30,24 @@ export interface QualityCase {
   history?: { at: string; status: string; assignee: string; note: string; by: string }[]
 }
 
-export async function fetchQualityCase(caseNumber: string): Promise<QualityCase | null> {
+export async function fetchQualityCase(caseNumber: string, contractor: string): Promise<QualityCase | null> {
   try {
     await ensureAuth()
     const snap = await getDocs(collection(db, 'quality'))
     for (const doc of snap.docs) {
       const data = doc.data()
-      // structure: { cases: [{caseNumber, ...}] }
       if (Array.isArray(data.cases)) {
-        const found = data.cases.find((c: QualityCase) => c.caseNumber === caseNumber)
+        const found = data.cases.find(
+          (c: QualityCase) =>
+            c.caseNumber === caseNumber &&
+            c.contractor?.toUpperCase() === contractor?.toUpperCase()
+        )
         if (found) return found
       }
-      // fallback: caseNumber directly on document
-      if (data.caseNumber === caseNumber) return data as QualityCase
+      if (
+        data.caseNumber === caseNumber &&
+        data.contractor?.toUpperCase() === contractor?.toUpperCase()
+      ) return data as QualityCase
     }
     return null
   } catch {
