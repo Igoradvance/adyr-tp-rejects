@@ -21,13 +21,19 @@ export default function ChatHistory({ ticketId, messages }: Props) {
   const { addChat, deleteChat, currentUser } = useStore()
   const [text, setText] = useState('')
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
-  const bottomRef = useRef<HTMLDivElement>(null)
+  const scrollRef = useRef<HTMLDivElement>(null)
+  const prevCountRef = useRef(messages.length)
 
   const isViewer = currentUser?.role === 'viewer'
   const canDelete = currentUser?.role === 'super_admin' || currentUser?.role === 'quality_control'
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
+    // Only scroll the chat box (not the whole modal) and only when a NEW
+    // message actually arrived — avoids jumping on the 10s background poll.
+    if (messages.length > prevCountRef.current && scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight
+    }
+    prevCountRef.current = messages.length
     if (currentUser) markMessagesRead(currentUser.id, ticketId, messages.length)
   }, [messages, currentUser, ticketId])
 
@@ -47,7 +53,7 @@ export default function ChatHistory({ ticketId, messages }: Props) {
       <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">היסטוריית תכתובת</h4>
 
       <div className="border border-gray-200 rounded-xl overflow-hidden">
-        <div className="h-52 overflow-y-auto p-3 space-y-3 bg-gray-50">
+        <div ref={scrollRef} className="h-52 overflow-y-auto p-3 space-y-3 bg-gray-50">
           {messages.length === 0 ? (
             <p className="text-center text-gray-400 text-sm py-6">אין הודעות עדיין</p>
           ) : (
@@ -108,7 +114,6 @@ export default function ChatHistory({ ticketId, messages }: Props) {
               )
             })
           )}
-          <div ref={bottomRef} />
         </div>
 
         {!isViewer && (
