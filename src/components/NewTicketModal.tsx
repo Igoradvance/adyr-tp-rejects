@@ -2,12 +2,14 @@
 import { useState } from 'react'
 import { useStore } from '@/lib/store'
 import { Contractor, Priority, TestPhase } from '@/types'
+import { sendNewTicketEmail } from '@/lib/email'
 import { X } from 'lucide-react'
 
 const TICKET_PATTERN = /^TP-\d{2}-\d{3}-P-\d{3}-\d{3}$/
 
 export default function NewTicketModal({ onClose }: { onClose: () => void }) {
-  const { createTicket, users } = useStore()
+  const { createTicket, users, currentUser } = useStore()
+  const [submitting, setSubmitting] = useState(false)
   const [form, setForm] = useState({
     ticketNumber: '',
     contractor: 'TMT' as Contractor,
@@ -28,14 +30,17 @@ export default function NewTicketModal({ onClose }: { onClose: () => void }) {
     return e
   }
 
-  const submit = () => {
+  const submit = async () => {
     const e = validate()
     if (Object.keys(e).length > 0) { setErrors(e); return }
+    setSubmitting(true)
     const assignedUser = users.find(u => u.id === form.assignedToId)
-    createTicket({
-      ticketNumber: form.ticketNumber.trim(),
+    const ticketNumber = form.ticketNumber.trim()
+    const description = form.description.trim()
+    await createTicket({
+      ticketNumber,
       contractor: form.contractor,
-      description: form.description.trim(),
+      description,
       priority: form.priority,
       testPhase: form.testPhase || undefined,
       targetDate: form.targetDate || undefined,
@@ -43,6 +48,26 @@ export default function NewTicketModal({ onClose }: { onClose: () => void }) {
       assignedToId: form.assignedToId || undefined,
       assignedToName: assignedUser?.name,
     })
+
+    // Notify all contractor PMs of this contractor by email (non-blocking)
+    const pms = users.filter(
+      u => u.role === 'contractor_pm' && u.contractor === form.contractor && u.email
+    )
+    await Promise.all(
+      pms.map(pm =>
+        sendNewTicketEmail({
+          toEmail: pm.email,
+          pmName: pm.name,
+          ticketNumber,
+          contractor: form.contractor,
+          priority: form.priority,
+          description,
+          createdBy: currentUser?.name || 'מערכת',
+        })
+      )
+    )
+
+    setSubmitting(false)
     onClose()
   }
 
@@ -148,9 +173,9 @@ export default function NewTicketModal({ onClose }: { onClose: () => void }) {
         </div>
 
         <div className="flex gap-3 px-6 py-4 border-t border-gray-200">
-          <button onClick={submit}
-            className="flex-1 py-2.5 bg-blue-600 text-white rounded-xl font-semibold text-sm hover:bg-blue-700 transition-colors shadow-sm">
-            פתח תקלה
+          <button onClick={submit} disabled={submitting}
+            className="flex-1 py-2.5 bg-blue-600 text-white rounded-xl font-semibold text-sm hover:bg-blue-700 transition-colors shadow-sm disabled:opacity-50">
+            {submitting ? 'פותח ושולח התראות...' : 'פתח תקלה'}
           </button>
           <button onClick={onClose}
             className="px-6 py-2.5 bg-gray-100 text-gray-700 rounded-xl font-semibold text-sm hover:bg-gray-200 transition-colors">
