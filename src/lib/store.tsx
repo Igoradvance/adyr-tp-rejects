@@ -28,11 +28,19 @@ interface StoreContextType {
   bulkUpdateStatus: (ids: string[], status: Status) => Promise<void>
   addChat: (ticketId: string, message: string) => Promise<void>
   deleteChat: (ticketId: string, messageId: string) => Promise<void>
+  settings: AppSettings
+  updateSettings: (patch: Partial<AppSettings>) => Promise<void>
   toggleSelect: (id: string) => void
   selectAll: () => void
   clearSelection: () => void
   setFilters: (f: Partial<FilterState>) => void
 }
+
+export interface AppSettings {
+  emailsEnabled: boolean
+}
+
+const DEFAULT_SETTINGS: AppSettings = { emailsEnabled: true }
 
 const Ctx = createContext<StoreContextType | null>(null)
 
@@ -53,6 +61,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [authLoading, setAuthLoading] = useState(true)
   const [ticketsLoading, setTicketsLoading] = useState(false)
+  const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS)
   const [filters, setFiltersState] = useState<FilterState>({
     search: '',
     status: 'all',
@@ -149,6 +158,35 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
   // Load users for assignment dropdowns
   useEffect(() => { refreshUsers() }, [refreshUsers])
+
+  // Load global app settings + subscribe to changes
+  useEffect(() => {
+    const loadSettings = async () => {
+      const { data, error } = await supabase.from('app_settings').select('*').eq('id', 1).single()
+      if (!error && data) {
+        setSettings({ emailsEnabled: data.emails_enabled ?? true })
+      }
+    }
+    loadSettings()
+
+    const ch = supabase.channel('settings-rt')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'app_settings' }, (payload) => {
+        const row = payload.new as Record<string, unknown>
+        if (row) setSettings({ emailsEnabled: (row.emails_enabled as boolean) ?? true })
+      })
+      .subscribe()
+    return () => { supabase.removeChannel(ch) }
+  }, [])
+
+  const updateSettings = useCallback(async (patch: Partial<AppSettings>) => {
+    setSettings(prev => ({ ...prev, ...patch }))
+    const next = { ...settings, ...patch }
+    await supabase.from('app_settings').upsert({
+      id: 1,
+      emails_enabled: next.emailsEnabled,
+      updated_at: new Date().toISOString(),
+    })
+  }, [settings])
 
   const login = useCallback(async (email: string, password: string): Promise<string | null> => {
     const { error } = await supabase.auth.signInWithPassword({ email, password })
@@ -291,7 +329,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       currentUser, authLoading, login, logout,
       tickets, filteredTickets, selectedIds, filters, users, ticketsLoading,
       refreshUsers, createTicket, updateTicket, deleteTicket, updateStatus, bulkUpdateStatus,
-      addChat, deleteChat, toggleSelect, selectAll, clearSelection, setFilters,
+      addChat, deleteChat, settings, updateSettings, toggleSelect, selectAll, clearSelection, setFilters,
     }}>
       {children}
     </Ctx.Provider>

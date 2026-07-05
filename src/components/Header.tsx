@@ -2,9 +2,10 @@
 import { useState } from 'react'
 import { useStore } from '@/lib/store'
 import { useRouter } from 'next/navigation'
-import { LogOut, Plus, KeyRound, BarChart2 } from 'lucide-react'
+import { LogOut, Plus, KeyRound, BarChart2, Settings } from 'lucide-react'
 import NewTicketModal from './NewTicketModal'
 import UserManagement from './UserManagement'
+import SettingsModal from './SettingsModal'
 import { UserRole } from '@/types'
 import { supabase } from '@/lib/supabase'
 
@@ -21,6 +22,7 @@ export default function Header() {
   const router = useRouter()
   const [showNew, setShowNew] = useState(false)
   const [showUsers, setShowUsers] = useState(false)
+  const [showSettings, setShowSettings] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [newPassword, setNewPassword] = useState('')
   const [pwMsg, setPwMsg] = useState('')
@@ -76,6 +78,16 @@ export default function Header() {
                 <span className="hidden sm:inline">משתמשים</span>
               </button>
             )}
+            {canManageUsers && (
+              <button
+                onClick={() => setShowSettings(true)}
+                className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-xl text-sm font-semibold hover:bg-gray-200 transition-colors"
+                title="הגדרות מערכת"
+              >
+                <Settings size={15} />
+                <span className="hidden sm:inline">הגדרות</span>
+              </button>
+            )}
             {canCreate && (
               <button
                 onClick={() => setShowNew(true)}
@@ -123,6 +135,7 @@ export default function Header() {
 
       {showNew && <NewTicketModal onClose={() => setShowNew(false)} />}
       {showUsers && <UserManagement onClose={() => setShowUsers(false)} />}
+      {showSettings && <SettingsModal onClose={() => setShowSettings(false)} />}
       {showPassword && (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
           <div className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-sm">

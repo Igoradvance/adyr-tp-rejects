@@ -8,7 +8,7 @@ import { X } from 'lucide-react'
 const TICKET_PATTERN = /^TP-\d{2}-\d{3}-P-\d{3}-\d{3}$/
 
 export default function NewTicketModal({ onClose }: { onClose: () => void }) {
-  const { createTicket, users, currentUser } = useStore()
+  const { createTicket, users, currentUser, settings } = useStore()
   const [submitting, setSubmitting] = useState(false)
   const [form, setForm] = useState({
     ticketNumber: '',
@@ -49,23 +49,25 @@ export default function NewTicketModal({ onClose }: { onClose: () => void }) {
       assignedToName: assignedUser?.name,
     })
 
-    // Notify all contractor PMs of this contractor by email (non-blocking)
-    const pms = users.filter(
-      u => u.role === 'contractor_pm' && u.contractor === form.contractor && u.email
-    )
-    await Promise.all(
-      pms.map(pm =>
-        sendNewTicketEmail({
-          toEmail: pm.email,
-          pmName: pm.name,
-          ticketNumber,
-          contractor: form.contractor,
-          priority: form.priority,
-          description,
-          createdBy: currentUser?.name || 'מערכת',
-        })
+    // Notify all contractor PMs of this contractor by email — unless emails are paused
+    if (settings.emailsEnabled) {
+      const pms = users.filter(
+        u => u.role === 'contractor_pm' && u.contractor === form.contractor && u.email
       )
-    )
+      await Promise.all(
+        pms.map(pm =>
+          sendNewTicketEmail({
+            toEmail: pm.email,
+            pmName: pm.name,
+            ticketNumber,
+            contractor: form.contractor,
+            priority: form.priority,
+            description,
+            createdBy: currentUser?.name || 'מערכת',
+          })
+        )
+      )
+    }
 
     setSubmitting(false)
     onClose()
