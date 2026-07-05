@@ -31,6 +31,14 @@ export default function TicketModal({ ticketId, onClose }: Props) {
     return () => window.removeEventListener('keydown', onKey)
   }, [onClose])
 
+  // Lock background scroll while the modal is open — prevents the page from
+  // jumping when the 10s background poll re-renders the ticket list.
+  useEffect(() => {
+    const prev = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => { document.body.style.overflow = prev }
+  }, [])
+
   if (!ticket) return null
 
   const role = currentUser?.role
@@ -76,10 +84,10 @@ export default function TicketModal({ ticketId, onClose }: Props) {
   }
 
   return (
-    <div className="fixed inset-0 bg-black/60 z-50 flex items-start justify-center p-4 overflow-y-auto backdrop-blur-sm">
-      <div className="bg-white rounded-2xl w-full max-w-4xl my-6 shadow-2xl border border-gray-100">
+    <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+      <div className="bg-white rounded-2xl w-full max-w-6xl max-h-[92vh] flex flex-col shadow-2xl border border-gray-100">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 flex-shrink-0">
           <div className="flex items-center gap-3 min-w-0">
             {canEditFields && editMode ? (
               <input
@@ -127,7 +135,7 @@ export default function TicketModal({ ticketId, onClose }: Props) {
           </div>
         </div>
 
-        <div className="p-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="p-6 grid grid-cols-1 lg:grid-cols-3 gap-6 overflow-y-auto flex-1">
           {/* Left: main content */}
           <div className="lg:col-span-2 space-y-5">
             {/* Description — QC/Admin fill, contractor reads only */}
