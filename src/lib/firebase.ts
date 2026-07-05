@@ -40,12 +40,13 @@ export interface FetchResult {
 export async function fetchQualityCase(caseNumber: string, contractor: string): Promise<FetchResult> {
   try {
     await ensureAuth()
-    const snap = await getDocs(collection(db, 'quality'))
+    const snap = await getDocs(collection(db, 'cases'))
     const matchesByNumber: { contractor: string; status: string }[] = []
 
     const allCases: QualityCase[] = []
     for (const doc of snap.docs) {
       const data = doc.data()
+      // each doc is a single case; also support legacy nested { cases: [...] }
       if (Array.isArray(data.cases)) allCases.push(...(data.cases as QualityCase[]))
       if (data.caseNumber) allCases.push(data as QualityCase)
     }
