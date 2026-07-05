@@ -18,15 +18,15 @@ const STATUS_COLORS: Record<string, string> = {
 export default function QualityTrackerPanel({ ticketNumber, contractor }: { ticketNumber: string; contractor: string }) {
   const [data, setData] = useState<QualityCase | null>(null)
   const [loading, setLoading] = useState(true)
-  const [notFound, setNotFound] = useState(false)
+  const [matchesByNumber, setMatchesByNumber] = useState<{ contractor: string; status: string }[]>([])
 
   const load = async () => {
     setLoading(true)
-    setNotFound(false)
     setData(null)
+    setMatchesByNumber([])
     const result = await fetchQualityCase(ticketNumber, contractor)
-    if (result) setData(result)
-    else setNotFound(true)
+    if (result.data) setData(result.data)
+    else setMatchesByNumber(result.matchesByNumber || [])
     setLoading(false)
   }
 
@@ -52,8 +52,23 @@ export default function QualityTrackerPanel({ ticketNumber, contractor }: { tick
             <div className="w-4 h-4 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin" />
             טוען נתונים...
           </div>
-        ) : notFound ? (
-          <p className="text-sm text-gray-400 italic">לא נמצא רשומה תואמת ב-Quality Tracker</p>
+        ) : !data ? (
+          <div className="space-y-1.5">
+            {matchesByNumber.length === 0 ? (
+              <p className="text-sm text-gray-400 italic">לא נמצא תיק תואם ב-Quality Tracker</p>
+            ) : (
+              <>
+                <p className="text-xs text-orange-600 font-semibold">
+                  נמצא תיק במערכת השנייה אך הקבלן לא תואם (בתקלה: {contractor})
+                </p>
+                {matchesByNumber.map((m, i) => (
+                  <p key={i} className="text-xs text-gray-500 bg-gray-100 rounded px-2 py-1">
+                    קבלן במערכת השנייה: <span className="font-semibold">{m.contractor}</span> · סטטוס: {m.status}
+                  </p>
+                ))}
+              </>
+            )}
+          </div>
         ) : data ? (
           <div className="space-y-3">
             <div className="grid grid-cols-2 gap-2 text-sm">

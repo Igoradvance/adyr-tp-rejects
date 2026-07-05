@@ -30,27 +30,41 @@ export interface QualityCase {
   history?: { at: string; status: string; assignee: string; note: string; by: string }[]
 }
 
-export async function fetchQualityCase(caseNumber: string, contractor: string): Promise<QualityCase | null> {
+export interface FetchResult {
+  data: QualityCase | null
+  // debug: all cases that match caseNumber regardless of contractor
+  matchesByNumber?: { contractor: string; status: string }[]
+  error?: string
+}
+
+export async function fetchQualityCase(caseNumber: string, contractor: string): Promise<FetchResult> {
   try {
     await ensureAuth()
     const snap = await getDocs(collection(db, 'quality'))
+    const matchesByNumber: { contractor: string; status: string }[] = []
+
+    const allCases: QualityCase[] = []
     for (const doc of snap.docs) {
       const data = doc.data()
-      if (Array.isArray(data.cases)) {
-        const found = data.cases.find(
-          (c: QualityCase) =>
-            c.caseNumber === caseNumber &&
-            c.contractor?.toUpperCase() === contractor?.toUpperCase()
-        )
-        if (found) return found
-      }
-      if (
-        data.caseNumber === caseNumber &&
-        data.contractor?.toUpperCase() === contractor?.toUpperCase()
-      ) return data as QualityCase
+      if (Array.isArray(data.cases)) allCases.push(...(data.cases as QualityCase[]))
+      if (data.caseNumber) allCases.push(data as QualityCase)
     }
-    return null
-  } catch {
-    return null
+
+    // exact match: caseNumber + contractor
+    const exact = allCases.find(
+      c => c.caseNumber === caseNumber && c.contractor?.toUpperCase() === contractor?.toUpperCase()
+    )
+    if (exact) return { data: exact }
+
+    // collect same-number cases for diagnostics / fallback
+    for (const c of allCases) {
+      if (c.caseNumber === caseNumber) {
+        matchesByNumber.push({ contractor: c.contractor || '—', status: c.status || '—' })
+      }
+    }
+
+    return { data: null, matchesByNumber }
+  } catch (e) {
+    return { data: null, error: String(e) }
   }
 }
