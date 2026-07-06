@@ -1,9 +1,24 @@
 'use client'
+import { useState } from 'react'
 import { useStore } from '@/lib/store'
 import { X, Settings, Mail, MailX } from 'lucide-react'
 
 export default function SettingsModal({ onClose }: { onClose: () => void }) {
   const { settings, updateSettings } = useStore()
+  const [error, setError] = useState('')
+  const [saving, setSaving] = useState(false)
+
+  const toggleEmails = async () => {
+    setError('')
+    setSaving(true)
+    try {
+      await updateSettings({ emailsEnabled: !settings.emailsEnabled })
+    } catch (e) {
+      setError('שמירה נכשלה: ' + (e instanceof Error ? e.message : 'שגיאה'))
+    } finally {
+      setSaving(false)
+    }
+  }
 
   return (
     <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
@@ -36,8 +51,9 @@ export default function SettingsModal({ onClose }: { onClose: () => void }) {
               </div>
             </div>
             <button
-              onClick={() => updateSettings({ emailsEnabled: !settings.emailsEnabled })}
-              className={`relative w-12 h-7 rounded-full transition-colors flex-shrink-0 ${
+              onClick={toggleEmails}
+              disabled={saving}
+              className={`relative w-12 h-7 rounded-full transition-colors flex-shrink-0 disabled:opacity-50 ${
                 settings.emailsEnabled ? 'bg-green-500' : 'bg-gray-300'
               }`}
               role="switch"
@@ -48,6 +64,12 @@ export default function SettingsModal({ onClose }: { onClose: () => void }) {
               }`} />
             </button>
           </div>
+
+          {error && (
+            <div className="bg-red-50 border border-red-200 text-red-600 text-xs px-3 py-2 rounded-lg break-all">
+              {error}
+            </div>
+          )}
 
           <p className="text-xs text-gray-400 text-center pt-2">
             ההגדרות משפיעות על כל המשתמשים במערכת (גלובלי)

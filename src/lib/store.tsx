@@ -179,13 +179,20 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   const updateSettings = useCallback(async (patch: Partial<AppSettings>) => {
-    setSettings(prev => ({ ...prev, ...patch }))
+    const prev = settings
     const next = { ...settings, ...patch }
-    await supabase.from('app_settings').upsert({
+    setSettings(next)
+    const { error } = await supabase.from('app_settings').upsert({
       id: 1,
       emails_enabled: next.emailsEnabled,
       updated_at: new Date().toISOString(),
     })
+    if (error) {
+      // revert optimistic update and surface the failure
+      setSettings(prev)
+      console.error('Failed to save settings:', error)
+      throw new Error(error.message)
+    }
   }, [settings])
 
   const login = useCallback(async (email: string, password: string): Promise<string | null> => {
