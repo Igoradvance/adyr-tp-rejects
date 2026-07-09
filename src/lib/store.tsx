@@ -298,6 +298,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       const recipients = users.filter(
         u => u.emailNotifications && u.email && (!u.contractor || u.contractor === ticket.contractor)
       )
+      const openNotes = ticket.checklist.filter(it => !it.done).length
       await Promise.all(
         recipients.map(u =>
           sendStatusChangeEmail({
@@ -308,6 +309,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
             oldStatus: ticket.status,
             newStatus: status,
             changedBy: currentUser.name,
+            openNotes,
+            totalNotes: ticket.checklist.length,
           })
         )
       )

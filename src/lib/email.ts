@@ -78,14 +78,20 @@ export interface StatusChangeEmailParams {
   oldStatus: string
   newStatus: string
   changedBy: string
+  openNotes?: number
+  totalNotes?: number
 }
 
 export async function sendStatusChangeEmail(p: StatusChangeEmailParams): Promise<boolean> {
+  let message = `סטטוס התקלה ${p.ticketNumber} שונה מ-"${p.oldStatus}" ל-"${p.newStatus}" ע"י ${p.changedBy}.`
+  if (p.openNotes && p.openNotes > 0) {
+    message += `\nיש ${p.openNotes} הערות פתוחות לטיפול${p.totalNotes ? ` (מתוך ${p.totalNotes})` : ''}.`
+  }
   return sendNotification({
     toEmail: p.toEmail,
     recipientName: p.recipientName,
     subject: `עדכון סטטוס: ${p.ticketNumber} — ${p.newStatus}`,
-    message: `סטטוס התקלה ${p.ticketNumber} שונה מ-"${p.oldStatus}" ל-"${p.newStatus}" ע"י ${p.changedBy}.`,
+    message,
     ticketNumber: p.ticketNumber,
     contractor: p.contractor,
     createdBy: p.changedBy,
