@@ -22,15 +22,39 @@ const ROLE_COLORS: Record<UserRole, string> = {
 
 const ROLES_NEEDING_CONTRACTOR: UserRole[] = ['contractor_pm', 'contractor_employee']
 
+function mapRow(p: Record<string, unknown>): User {
+  return {
+    id: p.id as string,
+    name: p.name as string,
+    email: p.email as string,
+    role: p.role as UserRole,
+    contractor: (p.contractor as Contractor) || undefined,
+    emailNotifications: (p.email_notifications as boolean) ?? false,
+  }
+}
+
 export default function UserManagement({ onClose }: { onClose: () => void }) {
-  const { users, refreshUsers, currentUser } = useStore()
+  const { refreshUsers, currentUser } = useStore()
   const [showForm, setShowForm] = useState(false)
   const [form, setForm] = useState({ name: '', email: '', password: '', role: 'contractor_employee' as UserRole, contractor: '' as Contractor | '' })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null)
+  const [users, setUsers] = useState<User[]>([])
+  const [usersLoading, setUsersLoading] = useState(true)
 
-  useEffect(() => { refreshUsers() }, [refreshUsers])
+  // Always pull a fresh list straight from the DB whenever this panel opens
+  const loadLive = async () => {
+    setUsersLoading(true)
+    try {
+      const res = await fetch(`/api/users/list?t=${Date.now()}`, { cache: 'no-store' })
+      const json = await res.json()
+      if (json.users) setUsers(json.users.map(mapRow))
+    } catch (_e) {}
+    setUsersLoading(false)
+  }
+
+  useEffect(() => { loadLive() }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const needsContractor = ROLES_NEEDING_CONTRACTOR.includes(form.role)
 
@@ -56,6 +80,7 @@ export default function UserManagement({ onClose }: { onClose: () => void }) {
 
     if (json.error) { setError(json.error); return }
 
+    await loadLive()
     await refreshUsers()
     setShowForm(false)
     setForm({ name: '', email: '', password: '', role: 'contractor_employee', contractor: '' })
@@ -80,6 +105,7 @@ export default function UserManagement({ onClose }: { onClose: () => void }) {
         setNotifError(`שמירה נכשלה (${res.status}): ${json.error || 'שגיאה לא ידועה'}`)
         setOptimistic(prev => { const n = { ...prev }; delete n[user.id]; return n })
       } else {
+        await loadLive()
         await refreshUsers()
       }
     } catch (e) {
@@ -97,6 +123,7 @@ export default function UserManagement({ onClose }: { onClose: () => void }) {
     })
     const json = await res.json()
     if (!json.error) {
+      await loadLive()
       await refreshUsers()
       setDeleteConfirm(null)
     }
@@ -198,7 +225,12 @@ export default function UserManagement({ onClose }: { onClose: () => void }) {
 
         {/* Users list */}
         <div className="divide-y divide-gray-100 max-h-[50vh] overflow-y-auto">
-          {users.length === 0 ? (
+          {usersLoading ? (
+            <div className="flex items-center justify-center gap-2 py-10 text-sm text-gray-400">
+              <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+              טוען נתונים מהמסד...
+            </div>
+          ) : users.length === 0 ? (
             <p className="text-center text-gray-400 text-sm py-8">אין משתמשים עדיין</p>
           ) : (
             users.map(user => (
