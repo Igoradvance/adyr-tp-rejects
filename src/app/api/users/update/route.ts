@@ -3,7 +3,7 @@ import { getSupabaseAdmin } from '@/lib/supabaseAdmin'
 
 export const dynamic = 'force-dynamic'
 
-export async function PATCH(req: NextRequest) {
+export async function POST(req: NextRequest) {
   const { userId, emailNotifications } = await req.json()
   if (!userId) return NextResponse.json({ error: 'userId חסר' }, { status: 400 })
 

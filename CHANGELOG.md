@@ -4,6 +4,12 @@
 
 ---
 
+## Build 52 – 2026-07-09
+### תיקון
+- מתג פעמון: החלפת PATCH ל-POST ב-/api/users/update (תאימות טובה יותר ל-proxy/CDN)
+
+---
+
 ## Build 51 – 2026-07-09
 ### תיקון
 - מתג פעמון: /api/users/update מחזיר את השורה שעודכנה ומזהה 0-שורות (404 עם הסבר); refreshUsers עם cache no-store
