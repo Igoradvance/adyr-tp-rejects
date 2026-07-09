@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react'
 import { useStore } from '@/lib/store'
 import { UserRole, Contractor, User } from '@/types'
-import { X, Plus, Trash2, Users } from 'lucide-react'
+import { X, Plus, Trash2, Users, Bell, BellOff } from 'lucide-react'
 
 const ROLE_LABELS: Record<UserRole, string> = {
   super_admin: 'סופר אדמין',
@@ -59,6 +59,18 @@ export default function UserManagement({ onClose }: { onClose: () => void }) {
     await refreshUsers()
     setShowForm(false)
     setForm({ name: '', email: '', password: '', role: 'contractor_employee', contractor: '' })
+  }
+
+  const [togglingId, setTogglingId] = useState<string | null>(null)
+  const toggleEmailNotif = async (user: User) => {
+    setTogglingId(user.id)
+    await fetch('/api/users/update', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId: user.id, emailNotifications: !user.emailNotifications }),
+    })
+    await refreshUsers()
+    setTogglingId(null)
   }
 
   const handleDelete = async (user: User) => {
@@ -192,6 +204,18 @@ export default function UserManagement({ onClose }: { onClose: () => void }) {
                       {user.contractor}
                     </span>
                   )}
+                  <button
+                    onClick={() => toggleEmailNotif(user)}
+                    disabled={togglingId === user.id}
+                    title={user.emailNotifications ? 'מקבל התראות מייל — לחץ לביטול' : 'לא מקבל התראות — לחץ להפעלה'}
+                    className={`p-1.5 rounded-lg transition-colors disabled:opacity-40 ${
+                      user.emailNotifications
+                        ? 'text-blue-600 bg-blue-50 hover:bg-blue-100'
+                        : 'text-gray-300 hover:text-gray-500 hover:bg-gray-100'
+                    }`}
+                  >
+                    {user.emailNotifications ? <Bell size={14} /> : <BellOff size={14} />}
+                  </button>
                   {user.id !== currentUser?.id && (
                     deleteConfirm === user.id ? (
                       <div className="flex items-center gap-1">

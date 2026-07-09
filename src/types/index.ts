@@ -10,6 +10,7 @@ export interface User {
   email: string
   role: UserRole
   contractor?: Contractor
+  emailNotifications?: boolean
 }
 
 export interface ChecklistItem {

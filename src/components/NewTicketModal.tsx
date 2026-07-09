@@ -60,20 +60,18 @@ export default function NewTicketModal({ onClose }: { onClose: () => void }) {
       checklist,
     })
 
-    // Notify all contractor PMs of this contractor by email — unless emails are paused
+    // Notify users who opted-in to email notifications (per-user) — unless emails are paused
     if (settings.emailsEnabled) {
-      const pms = users.filter(
-        u => u.role === 'contractor_pm' && u.contractor === form.contractor && u.email
-      )
+      const recipients = users.filter(u => u.emailNotifications && u.email)
       await Promise.all(
-        pms.map(pm =>
+        recipients.map(u =>
           sendNewTicketEmail({
-            toEmail: pm.email,
-            pmName: pm.name,
+            toEmail: u.email,
+            pmName: u.name,
             ticketNumber,
             contractor: form.contractor,
             priority: form.priority,
-            description,
+            description: checklist.map(c => `• ${c.text}`).join('\n') || '—',
             createdBy: currentUser?.name || 'מערכת',
           })
         )

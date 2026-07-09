@@ -8,6 +8,7 @@ import {
 import { INITIAL_TICKETS } from './mockData'
 import { supabase, rowToTicket, ticketToRow } from './supabase'
 import { generateId } from './utils'
+import { sendStatusChangeEmail } from './email'
 
 interface StoreContextType {
   currentUser: User | null
@@ -52,6 +53,7 @@ function profileToUser(p: Record<string, unknown>): User {
     email: p.email as string,
     role: p.role as User['role'],
     contractor: (p.contractor as User['contractor']) || undefined,
+    emailNotifications: (p.email_notifications as boolean) ?? false,
   }
 }
 
@@ -288,7 +290,25 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     const updated = { ...ticket, status, updatedAt: now, closedAt: status === 'סגור' ? now : ticket.closedAt, statusHistory: [...ticket.statusHistory, change] }
     setTickets(prev => prev.map(t => t.id === id ? updated : t))
     await supabase.from('tickets').update(ticketToRow(updated)).eq('id', id)
-  }, [currentUser, tickets])
+
+    // Notify opted-in users of the status change (per-user) — unless emails are paused
+    if (settings.emailsEnabled && ticket.status !== status) {
+      const recipients = users.filter(u => u.emailNotifications && u.email)
+      await Promise.all(
+        recipients.map(u =>
+          sendStatusChangeEmail({
+            toEmail: u.email,
+            recipientName: u.name,
+            ticketNumber: ticket.ticketNumber,
+            contractor: ticket.contractor,
+            oldStatus: ticket.status,
+            newStatus: status,
+            changedBy: currentUser.name,
+          })
+        )
+      )
+    }
+  }, [currentUser, tickets, users, settings])
 
   const bulkUpdateStatus = useCallback(async (ids: string[], status: Status) => {
     if (!currentUser) return
