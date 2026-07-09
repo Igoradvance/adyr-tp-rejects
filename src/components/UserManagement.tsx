@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react'
 import { useStore } from '@/lib/store'
 import { UserRole, Contractor, User } from '@/types'
-import { X, Plus, Trash2, Users, Bell, BellOff } from 'lucide-react'
+import { X, Plus, Trash2, Users, Bell, BellOff, RefreshCw } from 'lucide-react'
 
 const ROLE_LABELS: Record<UserRole, string> = {
   super_admin: 'סופר אדמין',
@@ -42,6 +42,10 @@ export default function UserManagement({ onClose }: { onClose: () => void }) {
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null)
   const [users, setUsers] = useState<User[]>([])
   const [usersLoading, setUsersLoading] = useState(true)
+  const [lastLoaded, setLastLoaded] = useState<string>('')
+  const [togglingId, setTogglingId] = useState<string | null>(null)
+  const [notifError, setNotifError] = useState('')
+  const [optimistic, setOptimistic] = useState<Record<string, boolean>>({})
 
   // Always pull a fresh list straight from the DB whenever this panel opens
   const loadLive = async () => {
@@ -49,7 +53,11 @@ export default function UserManagement({ onClose }: { onClose: () => void }) {
     try {
       const res = await fetch(`/api/users/list?t=${Date.now()}`, { cache: 'no-store' })
       const json = await res.json()
-      if (json.users) setUsers(json.users.map(mapRow))
+      if (json.users) {
+        setUsers(json.users.map(mapRow))
+        setOptimistic({}) // DB is now the source of truth — drop optimistic overrides
+        setLastLoaded(new Date().toLocaleTimeString('he-IL'))
+      }
     } catch (_e) {}
     setUsersLoading(false)
   }
@@ -86,9 +94,6 @@ export default function UserManagement({ onClose }: { onClose: () => void }) {
     setForm({ name: '', email: '', password: '', role: 'contractor_employee', contractor: '' })
   }
 
-  const [togglingId, setTogglingId] = useState<string | null>(null)
-  const [notifError, setNotifError] = useState('')
-  const [optimistic, setOptimistic] = useState<Record<string, boolean>>({})
   const toggleEmailNotif = async (user: User) => {
     const newVal = !(optimistic[user.id] ?? user.emailNotifications)
     setTogglingId(user.id)
@@ -138,6 +143,15 @@ export default function UserManagement({ onClose }: { onClose: () => void }) {
             <Users size={18} className="text-blue-600" />
             <h2 className="text-lg font-bold text-gray-900">ניהול משתמשים</h2>
             <span className="text-sm text-gray-400">({users.length})</span>
+            <button
+              onClick={loadLive}
+              disabled={usersLoading}
+              title="רענן מהמסד נתונים"
+              className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors disabled:opacity-40"
+            >
+              <RefreshCw size={14} className={usersLoading ? 'animate-spin' : ''} />
+            </button>
+            {lastLoaded && <span className="text-xs text-gray-300">נטען {lastLoaded}</span>}
           </div>
           <div className="flex items-center gap-2">
             <button
