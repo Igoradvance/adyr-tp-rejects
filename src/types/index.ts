@@ -12,6 +12,14 @@ export interface User {
   contractor?: Contractor
 }
 
+export interface ChecklistItem {
+  id: string
+  text: string
+  done: boolean
+  doneAt?: string
+  doneByName?: string
+}
+
 export interface ChatMessage {
   id: string
   ticketId: string
@@ -51,6 +59,7 @@ export interface Ticket {
   closedAt?: string
   chatMessages: ChatMessage[]
   statusHistory: StatusChange[]
+  checklist: ChecklistItem[]
   createdByName: string
   createdById: string
 }

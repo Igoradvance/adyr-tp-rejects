@@ -29,6 +29,7 @@ export function rowToTicket(row: Record<string, unknown>): Ticket {
     createdById: row.created_by_id as string,
     chatMessages: (row.chat_messages as Ticket['chatMessages']) || [],
     statusHistory: (row.status_history as Ticket['statusHistory']) || [],
+    checklist: (row.checklist as Ticket['checklist']) || [],
   }
 }
 
@@ -55,5 +56,6 @@ export function ticketToRow(t: Ticket): Record<string, unknown> {
     created_by_id: t.createdById,
     chat_messages: t.chatMessages,
     status_history: t.statusHistory,
+    checklist: t.checklist,
   }
 }

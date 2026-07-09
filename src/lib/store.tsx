@@ -28,6 +28,7 @@ interface StoreContextType {
   bulkUpdateStatus: (ids: string[], status: Status) => Promise<void>
   addChat: (ticketId: string, message: string) => Promise<void>
   deleteChat: (ticketId: string, messageId: string) => Promise<void>
+  updateChecklist: (ticketId: string, checklist: import('@/types').ChecklistItem[]) => Promise<void>
   settings: AppSettings
   updateSettings: (patch: Partial<AppSettings>) => Promise<void>
   toggleSelect: (id: string) => void
@@ -257,6 +258,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       createdById: currentUser.id,
       chatMessages: [],
       statusHistory: [{ id: generateId(), ticketId: id, userId: currentUser.id, userName: currentUser.name, oldStatus: 'פתוח', newStatus: 'פתוח', createdAt: now }],
+      checklist: data.checklist || [],
     }
     setTickets(prev => [newTicket, ...prev])
     const { error } = await supabase.from('tickets').insert(ticketToRow(newTicket))
@@ -323,6 +325,12 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     await supabase.from('tickets').update({ chat_messages: newMessages, updated_at: now }).eq('id', ticketId)
   }, [tickets])
 
+  const updateChecklist = useCallback(async (ticketId: string, checklist: import('@/types').ChecklistItem[]) => {
+    const now = new Date().toISOString()
+    setTickets(prev => prev.map(t => t.id === ticketId ? { ...t, checklist, updatedAt: now } : t))
+    await supabase.from('tickets').update({ checklist, updated_at: now }).eq('id', ticketId)
+  }, [])
+
   const toggleSelect = useCallback((id: string) => {
     setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id])
   }, [])
@@ -336,7 +344,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       currentUser, authLoading, login, logout,
       tickets, filteredTickets, selectedIds, filters, users, ticketsLoading,
       refreshUsers, createTicket, updateTicket, deleteTicket, updateStatus, bulkUpdateStatus,
-      addChat, deleteChat, settings, updateSettings, toggleSelect, selectAll, clearSelection, setFilters,
+      addChat, deleteChat, updateChecklist, settings, updateSettings, toggleSelect, selectAll, clearSelection, setFilters,
     }}>
       {children}
     </Ctx.Provider>

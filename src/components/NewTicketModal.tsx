@@ -1,9 +1,10 @@
 'use client'
 import { useState } from 'react'
 import { useStore } from '@/lib/store'
-import { Contractor, Priority, TestPhase } from '@/types'
+import { Contractor, Priority, TestPhase, ChecklistItem } from '@/types'
 import { sendNewTicketEmail } from '@/lib/email'
-import { X } from 'lucide-react'
+import { generateId } from '@/lib/utils'
+import { X, Plus, Trash2 } from 'lucide-react'
 
 const TICKET_PATTERN = /^TP-\d{2}-\d{3}-P-\d{3}-\d{3}$/
 
@@ -21,6 +22,11 @@ export default function NewTicketModal({ onClose }: { onClose: () => void }) {
     assignedToId: '',
   })
   const [errors, setErrors] = useState<Record<string, string>>({})
+  const [notes, setNotes] = useState<{ id: string; text: string }[]>([{ id: generateId(), text: '' }])
+
+  const addNote = () => setNotes(prev => [...prev, { id: generateId(), text: '' }])
+  const removeNote = (id: string) => setNotes(prev => prev.length > 1 ? prev.filter(n => n.id !== id) : prev)
+  const updateNote = (id: string, text: string) => setNotes(prev => prev.map(n => n.id === id ? { ...n, text } : n))
 
   const validate = () => {
     const e: Record<string, string> = {}
@@ -37,6 +43,10 @@ export default function NewTicketModal({ onClose }: { onClose: () => void }) {
     const assignedUser = users.find(u => u.id === form.assignedToId)
     const ticketNumber = form.ticketNumber.trim()
     const description = form.description.trim()
+    const checklist: ChecklistItem[] = notes
+      .map(n => n.text.trim())
+      .filter(Boolean)
+      .map(text => ({ id: generateId(), text, done: false }))
     await createTicket({
       ticketNumber,
       contractor: form.contractor,
@@ -47,6 +57,7 @@ export default function NewTicketModal({ onClose }: { onClose: () => void }) {
       testDate: form.testDate || undefined,
       assignedToId: form.assignedToId || undefined,
       assignedToName: assignedUser?.name,
+      checklist,
     })
 
     // Notify all contractor PMs of this contractor by email — unless emails are paused
@@ -128,6 +139,40 @@ export default function NewTicketModal({ onClose }: { onClose: () => void }) {
               placeholder="תאר את התקלה בפירוט..."
               className={inputCls(!!errors.description) + ' resize-none'}
             />
+          </Field>
+
+          {/* Checklist notes */}
+          <Field label="הערות / משימות (צ'קליסט)">
+            <div className="space-y-2">
+              {notes.map((n, i) => (
+                <div key={n.id} className="flex items-center gap-2">
+                  <span className="text-xs text-gray-400 w-5 flex-shrink-0">{i + 1}.</span>
+                  <input
+                    type="text"
+                    value={n.text}
+                    onChange={e => updateNote(n.id, e.target.value)}
+                    placeholder={`הערה ${i + 1}...`}
+                    className={inputCls(false)}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => removeNote(n.id)}
+                    disabled={notes.length === 1}
+                    className="p-2 text-gray-300 hover:text-red-500 disabled:opacity-30 disabled:hover:text-gray-300 transition-colors flex-shrink-0"
+                    title="הסר הערה"
+                  >
+                    <Trash2 size={15} />
+                  </button>
+                </div>
+              ))}
+              <button
+                type="button"
+                onClick={addNote}
+                className="flex items-center gap-1.5 text-sm text-blue-600 hover:text-blue-700 font-medium mt-1"
+              >
+                <Plus size={15} /> הוסף הערה
+              </button>
+            </div>
           </Field>
 
           {/* Priority */}

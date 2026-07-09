@@ -1,12 +1,12 @@
 'use client'
 import { useState, useEffect } from 'react'
-import { Ticket, Status, Priority, TestPhase } from '@/types'
+import { Ticket, Status, Priority, TestPhase, ChecklistItem } from '@/types'
 import { useStore } from '@/lib/store'
 import StatusBadge from './StatusBadge'
 import PriorityBadge from './PriorityBadge'
 import ChatHistory from './ChatHistory'
-import { formatDate, formatDateTime, getOpenDuration } from '@/lib/utils'
-import { X, Trash2, Clock, Edit2, Check, ChevronLeft } from 'lucide-react'
+import { formatDate, formatDateTime, getOpenDuration, generateId } from '@/lib/utils'
+import { X, Trash2, Clock, Edit2, Check, ChevronLeft, Plus, Square, CheckSquare } from 'lucide-react'
 import QualityTrackerPanel from './QualityTrackerPanel'
 
 interface Props {
@@ -15,7 +15,8 @@ interface Props {
 }
 
 export default function TicketModal({ ticketId, onClose }: Props) {
-  const { currentUser, updateTicket, updateStatus, deleteTicket, users, tickets } = useStore()
+  const { currentUser, updateTicket, updateStatus, deleteTicket, updateChecklist, users, tickets } = useStore()
+  const [newNote, setNewNote] = useState('')
   const [editMode, setEditMode] = useState(false)
   const [form, setForm] = useState<Partial<Ticket>>({})
 
@@ -82,6 +83,28 @@ export default function TicketModal({ ticketId, onClose }: Props) {
       onClose()
     }
   }
+
+  // Checklist handlers
+  const canCheck = !isViewer && (isQCOrAdmin || isMyContractor)
+  const toggleItem = (itemId: string) => {
+    if (!canCheck) return
+    const next: ChecklistItem[] = ticket.checklist.map(it =>
+      it.id === itemId
+        ? { ...it, done: !it.done, doneAt: !it.done ? new Date().toISOString() : undefined, doneByName: !it.done ? currentUser?.name : undefined }
+        : it
+    )
+    updateChecklist(ticket.id, next)
+  }
+  const addItem = () => {
+    if (!newNote.trim()) return
+    const next: ChecklistItem[] = [...ticket.checklist, { id: generateId(), text: newNote.trim(), done: false }]
+    setNewNote('')
+    updateChecklist(ticket.id, next)
+  }
+  const removeItem = (itemId: string) => {
+    updateChecklist(ticket.id, ticket.checklist.filter(it => it.id !== itemId))
+  }
+  const doneCount = ticket.checklist.filter(it => it.done).length
 
   return (
     <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
@@ -164,6 +187,79 @@ export default function TicketModal({ ticketId, onClose }: Props) {
                 <p className="text-gray-800 text-sm bg-blue-50 border border-blue-100 rounded-xl p-4 leading-relaxed whitespace-pre-wrap">
                   {ticket.description || <span className="text-gray-400">—</span>}
                 </p>
+              )}
+            </div>
+
+            {/* Checklist — notes to close one by one before full closure */}
+            <div>
+              <label className="flex items-center justify-between text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">
+                <span>הערות / משימות</span>
+                {ticket.checklist.length > 0 && (
+                  <span className={`normal-case text-xs font-bold ${doneCount === ticket.checklist.length ? 'text-green-600' : 'text-blue-600'}`}>
+                    {doneCount}/{ticket.checklist.length} הושלמו
+                  </span>
+                )}
+              </label>
+
+              {ticket.checklist.length > 0 && (
+                <div className="w-full h-1.5 bg-gray-100 rounded-full mb-3 overflow-hidden">
+                  <div
+                    className={`h-full transition-all ${doneCount === ticket.checklist.length ? 'bg-green-500' : 'bg-blue-500'}`}
+                    style={{ width: `${(doneCount / ticket.checklist.length) * 100}%` }}
+                  />
+                </div>
+              )}
+
+              <div className="space-y-1.5">
+                {ticket.checklist.length === 0 && (
+                  <p className="text-sm text-gray-400 italic">אין הערות</p>
+                )}
+                {ticket.checklist.map((it, i) => (
+                  <div key={it.id} className={`flex items-start gap-2 p-2 rounded-lg border transition-colors ${
+                    it.done ? 'bg-green-50 border-green-100' : 'bg-white border-gray-200'
+                  }`}>
+                    <button
+                      onClick={() => toggleItem(it.id)}
+                      disabled={!canCheck}
+                      className={`mt-0.5 flex-shrink-0 ${canCheck ? 'cursor-pointer' : 'cursor-default'} ${it.done ? 'text-green-600' : 'text-gray-300 hover:text-blue-500'}`}
+                    >
+                      {it.done ? <CheckSquare size={18} /> : <Square size={18} />}
+                    </button>
+                    <div className="flex-1 min-w-0">
+                      <p className={`text-sm ${it.done ? 'line-through text-gray-400' : 'text-gray-800'}`}>
+                        <span className="text-gray-400 text-xs ml-1">{i + 1}.</span> {it.text}
+                      </p>
+                      {it.done && it.doneByName && (
+                        <p className="text-xs text-green-600 mt-0.5">✓ {it.doneByName} · {it.doneAt ? formatDateTime(it.doneAt) : ''}</p>
+                      )}
+                    </div>
+                    {canEditFields && (
+                      <button onClick={() => removeItem(it.id)} className="mt-0.5 p-0.5 text-gray-300 hover:text-red-500 transition-colors flex-shrink-0">
+                        <Trash2 size={13} />
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              {canEditFields && (
+                <div className="flex items-center gap-2 mt-2">
+                  <input
+                    type="text"
+                    value={newNote}
+                    onChange={e => setNewNote(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && addItem()}
+                    placeholder="הוסף הערה חדשה..."
+                    className="flex-1 px-3 py-1.5 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-colors"
+                  />
+                  <button
+                    onClick={addItem}
+                    disabled={!newNote.trim()}
+                    className="flex items-center gap-1 px-3 py-1.5 bg-blue-600 text-white rounded-lg text-sm font-medium disabled:opacity-40 hover:bg-blue-700 transition-colors flex-shrink-0"
+                  >
+                    <Plus size={14} /> הוסף
+                  </button>
+                </div>
               )}
             </div>
 
