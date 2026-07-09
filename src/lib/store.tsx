@@ -81,7 +81,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
   const refreshUsers = useCallback(async () => {
     try {
-      const res = await fetch('/api/users/list', { cache: 'no-store' })
+      // cache-busting timestamp param — guarantees fresh data past any CDN/browser cache
+      const res = await fetch(`/api/users/list?t=${Date.now()}`, { cache: 'no-store' })
       if (!res.ok) return
       const json = await res.json()
       if (json.users) setUsers(json.users.map(profileToUser))
