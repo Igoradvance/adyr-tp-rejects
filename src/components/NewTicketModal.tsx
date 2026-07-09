@@ -32,7 +32,7 @@ export default function NewTicketModal({ onClose }: { onClose: () => void }) {
     const e: Record<string, string> = {}
     if (!form.ticketNumber.trim()) e.ticketNumber = 'שדה חובה'
     else if (!TICKET_PATTERN.test(form.ticketNumber.trim())) e.ticketNumber = 'פורמט נדרש: TP-xx-xxx-P-xxx-xxx'
-    if (!form.description.trim()) e.description = 'שדה חובה'
+    if (notes.every(n => !n.text.trim())) e.notes = 'יש להוסיף לפחות הערה אחת'
     return e
   }
 
@@ -130,19 +130,8 @@ export default function NewTicketModal({ onClose }: { onClose: () => void }) {
             </div>
           </Field>
 
-          {/* Description */}
-          <Field label="תיאור התקלה" required error={errors.description}>
-            <textarea
-              value={form.description}
-              onChange={e => setForm(p => ({ ...p, description: e.target.value }))}
-              rows={3}
-              placeholder="תאר את התקלה בפירוט..."
-              className={inputCls(!!errors.description) + ' resize-none'}
-            />
-          </Field>
-
           {/* Checklist notes */}
-          <Field label="הערות / משימות (צ'קליסט)">
+          <Field label="הערות / משימות (צ'קליסט)" required error={errors.notes}>
             <div className="space-y-2">
               {notes.map((n, i) => (
                 <div key={n.id} className="flex items-center gap-2">
