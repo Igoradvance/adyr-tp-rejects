@@ -63,23 +63,28 @@ export default function UserManagement({ onClose }: { onClose: () => void }) {
 
   const [togglingId, setTogglingId] = useState<string | null>(null)
   const [notifError, setNotifError] = useState('')
+  const [optimistic, setOptimistic] = useState<Record<string, boolean>>({})
   const toggleEmailNotif = async (user: User) => {
+    const newVal = !(optimistic[user.id] ?? user.emailNotifications)
     setTogglingId(user.id)
     setNotifError('')
+    setOptimistic(prev => ({ ...prev, [user.id]: newVal }))
     try {
       const res = await fetch('/api/users/update', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: user.id, emailNotifications: !user.emailNotifications }),
+        body: JSON.stringify({ userId: user.id, emailNotifications: newVal }),
       })
       const json = await res.json().catch(() => ({}))
       if (!res.ok || json.error) {
         setNotifError(`שמירה נכשלה (${res.status}): ${json.error || 'שגיאה לא ידועה'}`)
+        setOptimistic(prev => { const n = { ...prev }; delete n[user.id]; return n })
       } else {
         await refreshUsers()
       }
     } catch (e) {
       setNotifError('שגיאת רשת: ' + (e instanceof Error ? e.message : 'שגיאה'))
+      setOptimistic(prev => { const n = { ...prev }; delete n[user.id]; return n })
     }
     setTogglingId(null)
   }
@@ -221,18 +226,23 @@ export default function UserManagement({ onClose }: { onClose: () => void }) {
                       {user.contractor}
                     </span>
                   )}
-                  <button
-                    onClick={() => toggleEmailNotif(user)}
-                    disabled={togglingId === user.id}
-                    title={user.emailNotifications ? 'מקבל התראות מייל — לחץ לביטול' : 'לא מקבל התראות — לחץ להפעלה'}
-                    className={`p-1.5 rounded-lg transition-colors disabled:opacity-40 ${
-                      user.emailNotifications
-                        ? 'text-blue-600 bg-blue-50 hover:bg-blue-100'
-                        : 'text-gray-300 hover:text-gray-500 hover:bg-gray-100'
-                    }`}
-                  >
-                    {user.emailNotifications ? <Bell size={14} /> : <BellOff size={14} />}
-                  </button>
+                  {(() => {
+                    const notifOn = optimistic[user.id] ?? user.emailNotifications
+                    return (
+                      <button
+                        onClick={() => toggleEmailNotif(user)}
+                        disabled={togglingId === user.id}
+                        title={notifOn ? 'מקבל התראות מייל — לחץ לביטול' : 'לא מקבל התראות — לחץ להפעלה'}
+                        className={`p-1.5 rounded-lg transition-colors disabled:opacity-40 ${
+                          notifOn
+                            ? 'text-blue-600 bg-blue-50 hover:bg-blue-100'
+                            : 'text-gray-300 hover:text-gray-500 hover:bg-gray-100'
+                        }`}
+                      >
+                        {notifOn ? <Bell size={14} /> : <BellOff size={14} />}
+                      </button>
+                    )
+                  })()}
                   {user.id !== currentUser?.id && (
                     deleteConfirm === user.id ? (
                       <div className="flex items-center gap-1">
