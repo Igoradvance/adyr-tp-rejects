@@ -23,5 +23,7 @@ export async function GET() {
     })
     .filter(Boolean)
 
-  return NextResponse.json({ users })
+  return NextResponse.json({ users }, {
+    headers: { 'Cache-Control': 'no-store, max-age=0' },
+  })
 }
