@@ -62,14 +62,25 @@ export default function UserManagement({ onClose }: { onClose: () => void }) {
   }
 
   const [togglingId, setTogglingId] = useState<string | null>(null)
+  const [notifError, setNotifError] = useState('')
   const toggleEmailNotif = async (user: User) => {
     setTogglingId(user.id)
-    await fetch('/api/users/update', {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userId: user.id, emailNotifications: !user.emailNotifications }),
-    })
-    await refreshUsers()
+    setNotifError('')
+    try {
+      const res = await fetch('/api/users/update', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user.id, emailNotifications: !user.emailNotifications }),
+      })
+      const json = await res.json().catch(() => ({}))
+      if (!res.ok || json.error) {
+        setNotifError(`שמירה נכשלה (${res.status}): ${json.error || 'שגיאה לא ידועה'}`)
+      } else {
+        await refreshUsers()
+      }
+    } catch (e) {
+      setNotifError('שגיאת רשת: ' + (e instanceof Error ? e.message : 'שגיאה'))
+    }
     setTogglingId(null)
   }
 
@@ -172,6 +183,12 @@ export default function UserManagement({ onClose }: { onClose: () => void }) {
               </button>
             </div>
           </form>
+        )}
+
+        {notifError && (
+          <div className="mx-6 mt-3 bg-red-50 border border-red-200 text-red-600 text-xs px-3 py-2 rounded-lg break-all">
+            {notifError}
+          </div>
         )}
 
         {/* Users list */}
