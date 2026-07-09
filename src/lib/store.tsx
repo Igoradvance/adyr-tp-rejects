@@ -293,7 +293,11 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
     // Notify opted-in users of the status change (per-user) — unless emails are paused
     if (settings.emailsEnabled && ticket.status !== status) {
-      const recipients = users.filter(u => u.emailNotifications && u.email)
+      // Contractor-bound users get only their contractor's tickets; users
+      // without a contractor (QC/admin) get all.
+      const recipients = users.filter(
+        u => u.emailNotifications && u.email && (!u.contractor || u.contractor === ticket.contractor)
+      )
       await Promise.all(
         recipients.map(u =>
           sendStatusChangeEmail({

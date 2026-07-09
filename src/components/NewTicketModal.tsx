@@ -62,7 +62,11 @@ export default function NewTicketModal({ onClose }: { onClose: () => void }) {
 
     // Notify users who opted-in to email notifications (per-user) — unless emails are paused
     if (settings.emailsEnabled) {
-      const recipients = users.filter(u => u.emailNotifications && u.email)
+      // Recipients: opted-in users. Contractor-bound users get only their
+      // contractor's tickets; users without a contractor (QC/admin) get all.
+      const recipients = users.filter(
+        u => u.emailNotifications && u.email && (!u.contractor || u.contractor === form.contractor)
+      )
       await Promise.all(
         recipients.map(u =>
           sendNewTicketEmail({
