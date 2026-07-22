@@ -4,6 +4,7 @@ import { useStore } from '@/lib/store'
 import { X, Settings, Mail, MailX, Download, Upload, Database, Clock, HardDriveDownload, RotateCcw } from 'lucide-react'
 import { downloadBackup, parseBackup } from '@/lib/backup'
 import { formatDateTime } from '@/lib/utils'
+import { supabase } from '@/lib/supabase'
 import { Ticket } from '@/types'
 
 interface BackupMeta { id: string; created_at: string; ticket_count: number; trigger: string }
@@ -26,14 +27,15 @@ export default function SettingsModal({ onClose }: { onClose: () => void }) {
   const loadHistory = async () => {
     setHistoryLoading(true)
     setHistoryError('')
-    try {
-      const res = await fetch(`/api/backup/list?t=${Date.now()}`, { cache: 'no-store' })
-      const json = await res.json()
-      if (json.error) setHistoryError(`טעינת היסטוריה נכשלה (${res.status}): ${json.error}`)
-      else if (json.backups) setHistory(json.backups)
-    } catch (e) {
-      setHistoryError('שגיאת רשת: ' + (e instanceof Error ? e.message : 'שגיאה'))
-    }
+    // Read directly from Supabase with the super_admin session (RLS-gated).
+    // Avoids the admin API + Vercel Deployment Protection entirely.
+    const { data, error } = await supabase
+      .from('backups')
+      .select('id, created_at, ticket_count, trigger')
+      .order('created_at', { ascending: false })
+      .limit(60)
+    if (error) setHistoryError(`טעינת היסטוריה נכשלה: ${error.message}`)
+    else setHistory((data as BackupMeta[]) || [])
     setHistoryLoading(false)
   }
 
@@ -54,18 +56,17 @@ export default function SettingsModal({ onClose }: { onClose: () => void }) {
   }
 
   const downloadStored = async (id: string) => {
-    const res = await fetch(`/api/backup/get?id=${id}`)
-    const json = await res.json()
-    if (json.data) downloadBackup(json.data as Ticket[])
+    const { data } = await supabase.from('backups').select('data').eq('id', id).single()
+    if (data?.data) downloadBackup(data.data as Ticket[])
   }
 
   const restoreStored = async (b: BackupMeta) => {
     if (!window.confirm(`לשחזר את הגיבוי מ-${formatDateTime(b.created_at)} (${b.ticket_count} תקלות)? זהו מיזוג — לא ימחק תקלות קיימות.`)) return
     setBackupMsg('')
     try {
-      const res = await fetch(`/api/backup/get?id=${b.id}`)
-      const json = await res.json()
-      const count = await importTickets(json.data as Ticket[])
+      const { data, error } = await supabase.from('backups').select('data').eq('id', b.id).single()
+      if (error) throw new Error(error.message)
+      const count = await importTickets(data.data as Ticket[])
       setBackupMsg(`שוחזרו ${count} תקלות מהגיבוי`)
     } catch (e) {
       setBackupMsg('שחזור נכשל: ' + (e instanceof Error ? e.message : 'שגיאה'))
