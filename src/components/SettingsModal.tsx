@@ -1,8 +1,12 @@
 'use client'
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useStore } from '@/lib/store'
-import { X, Settings, Mail, MailX, Download, Upload, Database } from 'lucide-react'
+import { X, Settings, Mail, MailX, Download, Upload, Database, Clock, HardDriveDownload, RotateCcw } from 'lucide-react'
 import { downloadBackup, parseBackup } from '@/lib/backup'
+import { formatDateTime } from '@/lib/utils'
+import { Ticket } from '@/types'
+
+interface BackupMeta { id: string; created_at: string; ticket_count: number; trigger: string }
 
 export default function SettingsModal({ onClose }: { onClose: () => void }) {
   const { settings, updateSettings, tickets, importTickets } = useStore()
@@ -12,6 +16,56 @@ export default function SettingsModal({ onClose }: { onClose: () => void }) {
   const [restoring, setRestoring] = useState(false)
   const [pendingFile, setPendingFile] = useState<File | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
+
+  // Auto-backup history
+  const [history, setHistory] = useState<BackupMeta[]>([])
+  const [historyLoading, setHistoryLoading] = useState(true)
+  const [runningBackup, setRunningBackup] = useState(false)
+
+  const loadHistory = async () => {
+    setHistoryLoading(true)
+    try {
+      const res = await fetch(`/api/backup/list?t=${Date.now()}`, { cache: 'no-store' })
+      const json = await res.json()
+      if (json.backups) setHistory(json.backups)
+    } catch (_e) {}
+    setHistoryLoading(false)
+  }
+
+  useEffect(() => { loadHistory() }, [])
+
+  const runManualBackup = async () => {
+    setRunningBackup(true)
+    setBackupMsg('')
+    try {
+      const res = await fetch('/api/backup/run?trigger=manual')
+      const json = await res.json()
+      if (json.error) setBackupMsg('גיבוי נכשל: ' + json.error)
+      else { setBackupMsg(`גיבוי נשמר (${json.ticketCount} תקלות)`); await loadHistory() }
+    } catch (e) {
+      setBackupMsg('גיבוי נכשל: ' + (e instanceof Error ? e.message : 'שגיאה'))
+    }
+    setRunningBackup(false)
+  }
+
+  const downloadStored = async (id: string) => {
+    const res = await fetch(`/api/backup/get?id=${id}`)
+    const json = await res.json()
+    if (json.data) downloadBackup(json.data as Ticket[])
+  }
+
+  const restoreStored = async (b: BackupMeta) => {
+    if (!window.confirm(`לשחזר את הגיבוי מ-${formatDateTime(b.created_at)} (${b.ticket_count} תקלות)? זהו מיזוג — לא ימחק תקלות קיימות.`)) return
+    setBackupMsg('')
+    try {
+      const res = await fetch(`/api/backup/get?id=${b.id}`)
+      const json = await res.json()
+      const count = await importTickets(json.data as Ticket[])
+      setBackupMsg(`שוחזרו ${count} תקלות מהגיבוי`)
+    } catch (e) {
+      setBackupMsg('שחזור נכשל: ' + (e instanceof Error ? e.message : 'שגיאה'))
+    }
+  }
 
   const toggleEmails = async () => {
     setError('')
@@ -165,6 +219,60 @@ export default function SettingsModal({ onClose }: { onClose: () => void }) {
                 {backupMsg}
               </p>
             )}
+          </div>
+
+          {/* Automatic nightly backups history */}
+          <div className="p-4 rounded-xl border border-gray-200 bg-gray-50 space-y-3">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 bg-indigo-100 text-indigo-600">
+                  <Clock size={18} />
+                </div>
+                <div>
+                  <p className="font-semibold text-gray-900 text-sm">גיבויים אוטומטיים</p>
+                  <p className="text-xs text-gray-500 mt-0.5 leading-relaxed">
+                    גיבוי רץ אוטומטית כל לילה ב-02:00 (שעון ישראל). נשמרים 60 הגיבויים האחרונים.
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={runManualBackup}
+                disabled={runningBackup}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 text-white rounded-lg text-xs font-semibold hover:bg-indigo-700 disabled:opacity-50 transition-colors flex-shrink-0"
+              >
+                <HardDriveDownload size={13} /> {runningBackup ? 'מגבה...' : 'גבה עכשיו'}
+              </button>
+            </div>
+
+            <div className="max-h-48 overflow-y-auto space-y-1.5">
+              {historyLoading ? (
+                <p className="text-xs text-gray-400 text-center py-3">טוען היסטוריה...</p>
+              ) : history.length === 0 ? (
+                <p className="text-xs text-gray-400 text-center py-3">אין גיבויים עדיין — הראשון ייווצר הלילה או בלחיצה על &quot;גבה עכשיו&quot;</p>
+              ) : (
+                history.map(b => (
+                  <div key={b.id} className="flex items-center justify-between bg-white rounded-lg px-3 py-2 border border-gray-100">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold flex-shrink-0 ${
+                        b.trigger === 'manual' ? 'bg-blue-100 text-blue-600' : 'bg-indigo-100 text-indigo-600'
+                      }`}>
+                        {b.trigger === 'manual' ? 'ידני' : 'אוטומטי'}
+                      </span>
+                      <span className="text-xs text-gray-700 truncate">{formatDateTime(b.created_at)}</span>
+                      <span className="text-[11px] text-gray-400 flex-shrink-0">· {b.ticket_count} תקלות</span>
+                    </div>
+                    <div className="flex items-center gap-1 flex-shrink-0">
+                      <button onClick={() => downloadStored(b.id)} title="הורד" className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
+                        <Download size={13} />
+                      </button>
+                      <button onClick={() => restoreStored(b)} title="שחזר" className="p-1.5 text-gray-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors">
+                        <RotateCcw size={13} />
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
           </div>
 
           <p className="text-xs text-gray-400 text-center pt-2">
