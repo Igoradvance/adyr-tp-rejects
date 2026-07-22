@@ -30,6 +30,7 @@ interface StoreContextType {
   addChat: (ticketId: string, message: string) => Promise<void>
   deleteChat: (ticketId: string, messageId: string) => Promise<void>
   updateChecklist: (ticketId: string, checklist: import('@/types').ChecklistItem[]) => Promise<void>
+  importTickets: (tickets: Ticket[]) => Promise<number>
   settings: AppSettings
   updateSettings: (patch: Partial<AppSettings>) => Promise<void>
   toggleSelect: (id: string) => void
@@ -359,6 +360,15 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     await supabase.from('tickets').update({ checklist, updated_at: now }).eq('id', ticketId)
   }, [])
 
+  // Restore from a backup file — upsert tickets (merge, does not delete existing)
+  const importTickets = useCallback(async (incoming: Ticket[]): Promise<number> => {
+    const rows = incoming.map(ticketToRow)
+    const { error } = await supabase.from('tickets').upsert(rows, { onConflict: 'id' })
+    if (error) throw new Error(error.message)
+    await fetchTickets()
+    return rows.length
+  }, [fetchTickets])
+
   const toggleSelect = useCallback((id: string) => {
     setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id])
   }, [])
@@ -372,7 +382,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       currentUser, authLoading, login, logout,
       tickets, filteredTickets, selectedIds, filters, users, ticketsLoading,
       refreshUsers, createTicket, updateTicket, deleteTicket, updateStatus, bulkUpdateStatus,
-      addChat, deleteChat, updateChecklist, settings, updateSettings, toggleSelect, selectAll, clearSelection, setFilters,
+      addChat, deleteChat, updateChecklist, importTickets, settings, updateSettings, toggleSelect, selectAll, clearSelection, setFilters,
     }}>
       {children}
     </Ctx.Provider>
