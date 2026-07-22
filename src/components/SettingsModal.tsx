@@ -22,13 +22,18 @@ export default function SettingsModal({ onClose }: { onClose: () => void }) {
   const [historyLoading, setHistoryLoading] = useState(true)
   const [runningBackup, setRunningBackup] = useState(false)
 
+  const [historyError, setHistoryError] = useState('')
   const loadHistory = async () => {
     setHistoryLoading(true)
+    setHistoryError('')
     try {
       const res = await fetch(`/api/backup/list?t=${Date.now()}`, { cache: 'no-store' })
       const json = await res.json()
-      if (json.backups) setHistory(json.backups)
-    } catch (_e) {}
+      if (json.error) setHistoryError(`טעינת היסטוריה נכשלה (${res.status}): ${json.error}`)
+      else if (json.backups) setHistory(json.backups)
+    } catch (e) {
+      setHistoryError('שגיאת רשת: ' + (e instanceof Error ? e.message : 'שגיאה'))
+    }
     setHistoryLoading(false)
   }
 
@@ -245,7 +250,9 @@ export default function SettingsModal({ onClose }: { onClose: () => void }) {
             </div>
 
             <div className="max-h-48 overflow-y-auto space-y-1.5">
-              {historyLoading ? (
+              {historyError ? (
+                <p className="text-xs text-red-500 bg-red-50 rounded-lg px-3 py-2 break-all">{historyError}</p>
+              ) : historyLoading ? (
                 <p className="text-xs text-gray-400 text-center py-3">טוען היסטוריה...</p>
               ) : history.length === 0 ? (
                 <p className="text-xs text-gray-400 text-center py-3">אין גיבויים עדיין — הראשון ייווצר הלילה או בלחיצה על &quot;גבה עכשיו&quot;</p>
