@@ -237,7 +237,7 @@ export default function SettingsModal({ onClose }: { onClose: () => void }) {
                 <div>
                   <p className="font-semibold text-gray-900 text-sm">גיבויים אוטומטיים</p>
                   <p className="text-xs text-gray-500 mt-0.5 leading-relaxed">
-                    גיבוי רץ אוטומטית כל לילה ב-02:00 (שעון ישראל). נשמרים 60 הגיבויים האחרונים.
+                    גיבוי רץ אוטומטית כל לילה ב-02:00 (שעון ישראל). גיבויים אוטומטיים נמחקים אחרי שבועיים; גיבויים ידניים נשמרים.
                   </p>
                 </div>
               </div>

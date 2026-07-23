@@ -19,15 +19,9 @@ export async function GET(req: NextRequest) {
   })
   if (insErr) return NextResponse.json({ error: insErr.message }, { status: 500 })
 
-  // Retention: keep the 60 most recent backups, delete older ones
-  const { data: old } = await admin
-    .from('backups')
-    .select('id')
-    .order('created_at', { ascending: false })
-    .range(60, 1000)
-  if (old && old.length > 0) {
-    await admin.from('backups').delete().in('id', old.map((r: { id: string }) => r.id))
-  }
+  // Retention: delete AUTOMATIC backups older than 14 days (manual backups are kept)
+  const cutoff = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString()
+  await admin.from('backups').delete().eq('trigger', 'auto').lt('created_at', cutoff)
 
   return NextResponse.json({ success: true, ticketCount: tickets?.length ?? 0, trigger })
 }
