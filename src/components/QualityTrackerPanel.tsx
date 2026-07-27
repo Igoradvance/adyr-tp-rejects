@@ -13,7 +13,15 @@ const STATUS_COLORS: Record<string, string> = {
   'בטיפול': 'bg-yellow-100 text-yellow-700',
   'ממתין': 'bg-orange-100 text-orange-700',
   'סגור': 'bg-green-100 text-green-700',
+  'rejected': 'bg-red-100 text-red-700',
+  'סגור B+C': 'bg-red-100 text-red-700',
 }
+
+// תרגום ערכי סטטוס מ-Quality Tracker לתצוגה
+const STATUS_LABELS: Record<string, string> = {
+  'rejected': 'סגור B+C',
+}
+const statusLabel = (s: string) => STATUS_LABELS[s?.toLowerCase?.() ?? s] ?? s
 
 export default function QualityTrackerPanel({ ticketNumber, contractor }: { ticketNumber: string; contractor: string }) {
   const [data, setData] = useState<QualityCase | null>(null)
@@ -63,7 +71,7 @@ export default function QualityTrackerPanel({ ticketNumber, contractor }: { tick
                 </p>
                 {matchesByNumber.map((m, i) => (
                   <p key={i} className="text-xs text-gray-500 bg-gray-100 rounded px-2 py-1">
-                    קבלן במערכת השנייה: <span className="font-semibold">{m.contractor}</span> · סטטוס: {m.status}
+                    קבלן במערכת השנייה: <span className="font-semibold">{m.contractor}</span> · סטטוס: {statusLabel(m.status)}
                   </p>
                 ))}
               </>
@@ -75,7 +83,7 @@ export default function QualityTrackerPanel({ ticketNumber, contractor }: { tick
               <div>
                 <p className="text-xs text-gray-400 mb-0.5">סטטוס</p>
                 <span className={`inline-block px-2 py-0.5 rounded-lg text-xs font-semibold ${STATUS_COLORS[data.status] || 'bg-gray-100 text-gray-600'}`}>
-                  {data.status}
+                  {statusLabel(data.status)}
                 </span>
               </div>
               <div>
@@ -106,7 +114,7 @@ export default function QualityTrackerPanel({ ticketNumber, contractor }: { tick
                   {[...data.history].reverse().map((h, i) => (
                     <div key={i} className="bg-white rounded-lg px-3 py-1.5 text-xs border border-indigo-100">
                       <div className="flex items-center justify-between gap-2">
-                        <span className="font-semibold text-gray-700">{h.status}</span>
+                        <span className="font-semibold text-gray-700">{statusLabel(h.status)}</span>
                         <span className="text-gray-400">{h.at ? new Date(h.at).toLocaleDateString('he-IL') : ''}</span>
                       </div>
                       {h.note && <p className="text-gray-500 mt-0.5">{h.note}</p>}
