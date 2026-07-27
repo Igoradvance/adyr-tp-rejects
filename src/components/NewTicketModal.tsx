@@ -6,7 +6,7 @@ import { sendNewTicketEmail } from '@/lib/email'
 import { generateId } from '@/lib/utils'
 import { X, Plus, Trash2 } from 'lucide-react'
 
-const TICKET_PATTERN = /^TP-\d{2}-\d{3}-P-\d{3}-\d{3}$/
+const TICKET_PATTERN = /^TP-\d{2}-\d{3}-P-\d{3}-\d{3}[A-Za-z]?$/
 
 export default function NewTicketModal({ onClose }: { onClose: () => void }) {
   const { createTicket, users, currentUser, settings } = useStore()
@@ -31,7 +31,7 @@ export default function NewTicketModal({ onClose }: { onClose: () => void }) {
   const validate = () => {
     const e: Record<string, string> = {}
     if (!form.ticketNumber.trim()) e.ticketNumber = 'שדה חובה'
-    else if (!TICKET_PATTERN.test(form.ticketNumber.trim())) e.ticketNumber = 'פורמט נדרש: TP-xx-xxx-P-xxx-xxx'
+    else if (!TICKET_PATTERN.test(form.ticketNumber.trim())) e.ticketNumber = 'פורמט נדרש: TP-xx-xxx-P-xxx-xxx (אפשר אות בסוף, למשל 015A)'
     if (notes.every(n => !n.text.trim())) e.notes = 'יש להוסיף לפחות הערה אחת'
     return e
   }
