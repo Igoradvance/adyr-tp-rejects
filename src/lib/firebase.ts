@@ -32,32 +32,45 @@ export interface QualityCase {
 
 export interface FetchResult {
   data: QualityCase | null
-  // debug: all cases that match caseNumber regardless of contractor
   matchesByNumber?: { contractor: string; status: string }[]
   error?: string
 }
 
+// ---------------------------------------------------------------------------
+// In-memory cache: all cases snapshot, refreshed at most every 60 seconds.
+// A single collection read serves every panel open within that window.
+// ---------------------------------------------------------------------------
+const CACHE_TTL_MS = 60_000
+let cachedCases: QualityCase[] | null = null
+let cacheExpiry = 0
+
+async function getAllCases(): Promise<QualityCase[]> {
+  if (cachedCases && Date.now() < cacheExpiry) return cachedCases
+
+  await ensureAuth()
+  const snap = await getDocs(collection(db, 'cases'))
+  const allCases: QualityCase[] = []
+  for (const doc of snap.docs) {
+    const data = doc.data()
+    if (Array.isArray(data.cases)) allCases.push(...(data.cases as QualityCase[]))
+    if (data.caseNumber) allCases.push(data as QualityCase)
+  }
+
+  cachedCases = allCases
+  cacheExpiry = Date.now() + CACHE_TTL_MS
+  return allCases
+}
+
 export async function fetchQualityCase(caseNumber: string, contractor: string): Promise<FetchResult> {
   try {
-    await ensureAuth()
-    const snap = await getDocs(collection(db, 'cases'))
+    const allCases = await getAllCases()
     const matchesByNumber: { contractor: string; status: string }[] = []
 
-    const allCases: QualityCase[] = []
-    for (const doc of snap.docs) {
-      const data = doc.data()
-      // each doc is a single case; also support legacy nested { cases: [...] }
-      if (Array.isArray(data.cases)) allCases.push(...(data.cases as QualityCase[]))
-      if (data.caseNumber) allCases.push(data as QualityCase)
-    }
-
-    // exact match: caseNumber + contractor
     const exact = allCases.find(
       c => c.caseNumber === caseNumber && c.contractor?.toUpperCase() === contractor?.toUpperCase()
     )
     if (exact) return { data: exact }
 
-    // collect same-number cases for diagnostics / fallback
     for (const c of allCases) {
       if (c.caseNumber === caseNumber) {
         matchesByNumber.push({ contractor: c.contractor || '—', status: c.status || '—' })
@@ -68,4 +81,9 @@ export async function fetchQualityCase(caseNumber: string, contractor: string): 
   } catch (e) {
     return { data: null, error: String(e) }
   }
+}
+
+// Allow the refresh button in QualityTrackerPanel to force a fresh fetch
+export function invalidateQualityCache() {
+  cacheExpiry = 0
 }
