@@ -6,7 +6,9 @@ import { sendNewTicketEmail } from '@/lib/email'
 import { generateId } from '@/lib/utils'
 import { X, Plus, Trash2 } from 'lucide-react'
 
-const TICKET_PATTERN = /^TP-\d{2}-\d{3}-P-\d{3}-\d{3}[A-Za-z]?$/
+// TP-xx-xxx-[subsystem letter]-xxx-xxx[optional suffix letter]
+// Subsystem letters: P (piping), B (building), E (electrical), I (instrumentation), H (HVAC), C (civil), etc.
+const TICKET_PATTERN = /^TP-\d{2}-\d{3}-[A-Za-z]-\d{3}-\d{3}[A-Za-z]?$/
 
 export default function NewTicketModal({ onClose }: { onClose: () => void }) {
   const { createTicket, users, currentUser, settings } = useStore()
@@ -31,7 +33,7 @@ export default function NewTicketModal({ onClose }: { onClose: () => void }) {
   const validate = () => {
     const e: Record<string, string> = {}
     if (!form.ticketNumber.trim()) e.ticketNumber = 'שדה חובה'
-    else if (!TICKET_PATTERN.test(form.ticketNumber.trim())) e.ticketNumber = 'פורמט נדרש: TP-xx-xxx-P-xxx-xxx (אפשר אות בסוף, למשל 015A)'
+    else if (!TICKET_PATTERN.test(form.ticketNumber.trim())) e.ticketNumber = 'פורמט נדרש: TP-xx-xxx-[אות]-xxx-xxx (למשל P/B/E/I/H/C; אפשר אות אופציונלית בסוף)'
     if (notes.every(n => !n.text.trim())) e.notes = 'יש להוסיף לפחות הערה אחת'
     return e
   }
@@ -105,7 +107,7 @@ export default function NewTicketModal({ onClose }: { onClose: () => void }) {
               type="text"
               value={form.ticketNumber}
               onChange={e => setForm(p => ({ ...p, ticketNumber: e.target.value }))}
-              placeholder="TP-01-001-P-001-001"
+              placeholder="TP-10-013-P-006-015"
               className={inputCls(!!errors.ticketNumber) + ' font-mono'}
             />
           </Field>
@@ -244,3 +246,4 @@ function inputCls(hasError: boolean) {
     hasError ? 'border-red-300 focus:ring-red-400' : 'border-gray-300'
   }`
 }
+
