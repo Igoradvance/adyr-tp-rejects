@@ -1,3 +1,9 @@
+## Build 64 – 2026-07-27
+### שונה
+- תבנית מספר תיק: האות באמצע (Subsystem) יכולה להיות כל אות — P, B, E, I, H, C וכו' (לא רק P)
+
+---
+
 ﻿# CHANGELOG – TP Reject Management System
 
 כל הזכויות שמורות © Igor Ositchansky – Advance Engineering
@@ -441,8 +447,3 @@
 - צביעת שורות לפי קירבה לתאריך טסט (צהוב/אדום)
 - עדיפות וניהול שיוך לפי הרשאות
 - GitHub + Vercel + Supabase
-
-
-
-
-
