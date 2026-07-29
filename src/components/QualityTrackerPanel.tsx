@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
-import { fetchQualityCase, QualityCase } from '@/lib/firebase'
+import { fetchQualityCase, invalidateQualityCache, QualityCase } from '@/lib/firebase'
 import { RefreshCw, MapPin, Clock } from 'lucide-react'
 
 const STATUS_COLORS: Record<string, string> = {
@@ -28,7 +28,8 @@ export default function QualityTrackerPanel({ ticketNumber, contractor }: { tick
   const [loading, setLoading] = useState(true)
   const [matchesByNumber, setMatchesByNumber] = useState<{ contractor: string; status: string }[]>([])
 
-  const load = async () => {
+  const load = async (forceRefresh = false) => {
+    if (forceRefresh) invalidateQualityCache()
     setLoading(true)
     setData(null)
     setMatchesByNumber([])
@@ -48,7 +49,7 @@ export default function QualityTrackerPanel({ ticketNumber, contractor }: { tick
           <span className="text-sm font-bold text-indigo-800">Quality Tracker</span>
           <span className="text-xs text-indigo-500 font-mono">{ticketNumber}</span>
         </div>
-        <button onClick={load} disabled={loading}
+        <button onClick={() => load(true)} disabled={loading}
           className="p-1.5 text-indigo-500 hover:text-indigo-700 hover:bg-indigo-100 rounded-lg transition-colors disabled:opacity-40">
           <RefreshCw size={13} className={loading ? 'animate-spin' : ''} />
         </button>
@@ -130,3 +131,4 @@ export default function QualityTrackerPanel({ ticketNumber, contractor }: { tick
     </div>
   )
 }
+
