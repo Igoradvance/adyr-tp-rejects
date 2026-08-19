@@ -60,7 +60,7 @@ export default function DashboardPage() {
     <div className="min-h-screen bg-gray-50">
       <Header />
 
-      <main className="max-w-[1600px] mx-auto px-4 sm:px-6 py-6 space-y-0">
+      <main className="max-w-full mx-auto px-4 sm:px-6 py-6 space-y-0">
         {/* Stat cards */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
           {TABS.slice(1).map(tab => (
@@ -126,10 +126,11 @@ export default function DashboardPage() {
         <TicketTable />
       </main>
       {/* Footer */}
-      <footer className="max-w-[1600px] mx-auto px-4 sm:px-6 py-4 mt-6 border-t border-gray-200 text-center text-xs text-gray-400 space-y-0.5">
+      <footer className="max-w-full mx-auto px-4 sm:px-6 py-4 mt-6 border-t border-gray-200 text-center text-xs text-gray-400 space-y-0.5">
         <p>{COPYRIGHT}</p>
         <p>v{VERSION} · Build {BUILD} · {BUILD_DATE}</p>
       </footer>
     </div>
   )
 }
+
