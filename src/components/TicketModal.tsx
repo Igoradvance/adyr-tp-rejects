@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
-import { Ticket, Status, Priority, TestPhase, ChecklistItem } from '@/types'
+import { Ticket, Status, Priority, TestPhase, SaipemStatus, ChecklistItem } from '@/types'
 import { useStore } from '@/lib/store'
 import StatusBadge from './StatusBadge'
 import PriorityBadge from './PriorityBadge'
@@ -69,6 +69,8 @@ export default function TicketModal({ ticketId, onClose }: Props) {
       description: form.description,
       priority: form.priority,
       testPhase: form.testPhase,
+      saipemStatus: form.saipemStatus,
+      saipemNotes: form.saipemNotes,
       targetDate: form.targetDate,
       testDate: form.testDate,
       assignedToId: form.assignedToId,
@@ -385,6 +387,66 @@ export default function TicketModal({ ticketId, onClose }: Props) {
               )}
             </div>
 
+            {/* SAFEM status */}
+            <div>
+              <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">סייפם</label>
+              {canEditFields ? (
+                <select
+                  value={editMode ? (form.saipemStatus || '') : (ticket.saipemStatus || '')}
+                  onChange={e => {
+                    const v = (e.target.value as SaipemStatus) || undefined
+                    if (editMode) {
+                      setForm(p => ({ ...p, saipemStatus: v }))
+                    } else {
+                      updateTicket(ticket.id, { saipemStatus: v })
+                    }
+                  }}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">לא צוין</option>
+                  <option value="לפני סייפם">לפני סייפם</option>
+                  <option value="אחרי סייפם">אחרי סייפם</option>
+                </select>
+              ) : ticket.saipemStatus ? (
+                <span className={`inline-flex px-2.5 py-1 rounded-lg text-xs font-medium ${
+                  ticket.saipemStatus === 'אחרי סייפם' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'
+                }`}>
+                  {ticket.saipemStatus}
+                </span>
+              ) : (
+                <span className="text-sm text-gray-400">—</span>
+              )}
+            </div>
+
+            {/* SAFEM notes */}
+            <div>
+              <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">הערות סייפם</label>
+              {canEditFields ? (
+                editMode ? (
+                  <textarea
+                    value={form.saipemNotes || ''}
+                    onChange={e => setForm(p => ({ ...p, saipemNotes: e.target.value || undefined }))}
+                    rows={3}
+                    placeholder="הערות מסייפם אחרי ביקורת..."
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                  />
+                ) : (
+                  <div
+                    onClick={() => setEditMode(true)}
+                    className="text-gray-800 text-sm bg-gray-50 hover:bg-gray-100 rounded-lg p-3 leading-relaxed cursor-pointer border-2 border-dashed border-transparent hover:border-gray-300 transition-all whitespace-pre-wrap min-h-[2.5rem]"
+                  >
+                    {ticket.saipemNotes || <span className="text-gray-400 text-xs">לחץ להזנת הערות סייפם...</span>}
+                  </div>
+                )
+              ) : ticket.saipemNotes ? (
+                <p className="text-gray-800 text-sm bg-amber-50 border border-amber-100 rounded-lg p-3 leading-relaxed whitespace-pre-wrap">
+                  {ticket.saipemNotes}
+                </p>
+              ) : (
+                <span className="text-sm text-gray-400">—</span>
+              )}
+            </div>
+
             {/* Dates */}
             <div>
               <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">תאריך יעד לסיום</label>
@@ -440,4 +502,3 @@ function MetaRow({ label, value }: { label: string; value: string }) {
     </div>
   )
 }
-
