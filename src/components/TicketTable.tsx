@@ -62,7 +62,7 @@ export default function TicketTable() {
             <p className="text-gray-400 text-sm mt-1">נסה לשנות את הסינון או החיפוש</p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
+          <div>
             <table className="w-full text-sm">
               <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
