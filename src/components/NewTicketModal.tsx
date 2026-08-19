@@ -1,7 +1,7 @@
 'use client'
 import { useState } from 'react'
 import { useStore } from '@/lib/store'
-import { Contractor, Priority, TestPhase, ChecklistItem } from '@/types'
+import { Contractor, Priority, TestPhase, SaipemStatus, ChecklistItem } from '@/types'
 import { sendNewTicketEmail } from '@/lib/email'
 import { generateId } from '@/lib/utils'
 import { X, Plus, Trash2 } from 'lucide-react'
@@ -19,6 +19,7 @@ export default function NewTicketModal({ onClose }: { onClose: () => void }) {
     description: '',
     priority: 'בינונית' as Priority,
     testPhase: '' as TestPhase | '',
+    saipemStatus: '' as SaipemStatus | '',
     targetDate: '',
     testDate: '',
     assignedToId: '',
@@ -55,6 +56,7 @@ export default function NewTicketModal({ onClose }: { onClose: () => void }) {
       description,
       priority: form.priority,
       testPhase: form.testPhase || undefined,
+      saipemStatus: form.saipemStatus || undefined,
       targetDate: form.targetDate || undefined,
       testDate: form.testDate || undefined,
       assignedToId: form.assignedToId || undefined,
@@ -64,8 +66,6 @@ export default function NewTicketModal({ onClose }: { onClose: () => void }) {
 
     // Notify users who opted-in to email notifications (per-user) — unless emails are paused
     if (settings.emailsEnabled) {
-      // Recipients: opted-in users. Contractor-bound users get only their
-      // contractor's tickets; users without a contractor (QC/admin) get all.
       const recipients = users.filter(
         u => u.emailNotifications && u.email && (!u.contractor || u.contractor === form.contractor)
       )
@@ -199,6 +199,16 @@ export default function NewTicketModal({ onClose }: { onClose: () => void }) {
             </select>
           </Field>
 
+          {/* SAFEM status */}
+          <Field label="סטטוס סייפם (לא חובה)">
+            <select value={form.saipemStatus} onChange={e => setForm(p => ({ ...p, saipemStatus: e.target.value as SaipemStatus | '' }))}
+              className={inputCls(false)}>
+              <option value="">לא צוין</option>
+              <option value="לפני סייפם">לפני סייפם</option>
+              <option value="אחרי סייפם">אחרי סייפם</option>
+            </select>
+          </Field>
+
           {/* Dates */}
           <div className="grid grid-cols-2 gap-3">
             <Field label="תאריך יעד (לא חובה)">
@@ -246,4 +256,3 @@ function inputCls(hasError: boolean) {
     hasError ? 'border-red-300 focus:ring-red-400' : 'border-gray-300'
   }`
 }
-
