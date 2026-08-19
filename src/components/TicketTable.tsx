@@ -8,7 +8,7 @@ import { formatDate, getOpenDuration, getRowHighlight, markMessagesRead, getRead
 import { MessageSquare, Clock, ArrowUpDown } from 'lucide-react'
 import { Ticket } from '@/types'
 
-type SortKey = keyof Pick<Ticket, 'ticketNumber' | 'contractor' | 'status' | 'priority' | 'targetDate' | 'testDate' | 'openedAt' | 'updatedAt'> | 'chatCount'
+type SortKey = keyof Pick<Ticket, 'ticketNumber' | 'contractor' | 'status' | 'priority' | 'targetDate' | 'testDate' | 'openedAt' | 'updatedAt' | 'saipemStatus'> | 'chatCount'
 
 const PRIORITY_ORDER = { 'גבוהה': 0, 'בינונית': 1, 'נמוכה': 2 }
 const STATUS_ORDER = { 'פתוח': 0, 'בטיפול': 1, 'ממתין לאישור': 2, 'סגור': 3 }
@@ -80,6 +80,7 @@ export default function TicketTable() {
                   <Th label="עדיפות" field="priority" />
                   <Th label="משוייך ל" />
                   <Th label="שלב טסט" />
+                  <Th label="סייפם" field="saipemStatus" />
                   <Th label="תאריך יעד" field="targetDate" />
                   <Th label="תאריך טסט" field="testDate" />
                   <Th label="זמן פתוח" field="openedAt" />
@@ -153,6 +154,18 @@ export default function TicketTable() {
                         {ticket.testPhase ? (
                           <span className="px-2 py-0.5 bg-purple-100 text-purple-700 rounded text-xs whitespace-nowrap">
                             {ticket.testPhase}
+                          </span>
+                        ) : <span className="text-gray-300">—</span>}
+                      </td>
+
+                      <td className="px-4 py-3">
+                        {ticket.saipemStatus ? (
+                          <span className={`px-2 py-0.5 rounded text-xs whitespace-nowrap font-medium ${
+                            ticket.saipemStatus === 'אחרי סייפם'
+                              ? 'bg-green-100 text-green-700'
+                              : 'bg-amber-100 text-amber-700'
+                          }`}>
+                            {ticket.saipemStatus}
                           </span>
                         ) : <span className="text-gray-300">—</span>}
                       </td>
