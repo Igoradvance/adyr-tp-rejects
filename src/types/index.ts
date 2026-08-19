@@ -2,6 +2,7 @@ export type Contractor = 'TMT' | 'EBS'
 export type Status = 'פתוח' | 'בטיפול' | 'ממתין לאישור' | 'סגור'
 export type Priority = 'גבוהה' | 'בינונית' | 'נמוכה'
 export type TestPhase = 'לפני טסט' | 'אחרי טסט'
+export type SaipemStatus = 'לפני סייפם' | 'אחרי סייפם'
 export type UserRole = 'super_admin' | 'quality_control' | 'contractor_pm' | 'contractor_employee' | 'viewer'
 
 export interface User {
@@ -51,6 +52,8 @@ export interface Ticket {
   priority: Priority
   description: string
   testPhase?: TestPhase
+  saipemStatus?: SaipemStatus
+  saipemNotes?: string
   targetDate?: string
   testDate?: string
   notes?: string
