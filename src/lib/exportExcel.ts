@@ -36,6 +36,11 @@ export function exportToExcel(tickets: Ticket[], exporterName: string) {
     'בינונית': tickets.filter(t => t.priority === 'בינונית').length,
     'נמוכה': tickets.filter(t => t.priority === 'נמוכה').length,
   }
+  const bySaipem = {
+    'לפני סייפם': tickets.filter(t => t.saipemStatus === 'לפני סייפם').length,
+    'אחרי סייפם': tickets.filter(t => t.saipemStatus === 'אחרי סייפם').length,
+    'לא צוין': tickets.filter(t => !t.saipemStatus).length,
+  }
   const openTickets = tickets.filter(t => t.status !== 'סגור')
   const avgOpenDays = openTickets.length
     ? Math.round(openTickets.reduce((s, t) => s + openDays(t), 0) / openTickets.length)
@@ -72,6 +77,11 @@ export function exportToExcel(tickets: Ticket[], exporterName: string) {
     ['גבוהה', byPriority['גבוהה'], '', ''],
     ['בינונית', byPriority['בינונית'], '', ''],
     ['נמוכה', byPriority['נמוכה'], '', ''],
+    ['', '', '', ''],
+    ['🔎 לפי סייפם', '', '', ''],
+    ['לפני סייפם', bySaipem['לפני סייפם'], '', ''],
+    ['אחרי סייפם', bySaipem['אחרי סייפם'], '', ''],
+    ['לא צוין', bySaipem['לא צוין'], '', ''],
   ]
 
   const wsKPI = XLSX.utils.aoa_to_sheet(kpiRows)
@@ -81,7 +91,7 @@ export function exportToExcel(tickets: Ticket[], exporterName: string) {
 
   // ── Sheet 2: All Tickets ────────────────────────────────────────────────
   const headers = [
-    'מס׳ תיק', 'קבלן', 'סטטוס', 'עדיפות', 'שלב טסט',
+    'מס׳ תיק', 'קבלן', 'סטטוס', 'עדיפות', 'שלב טסט', 'סייפם', 'הערות סייפם',
     'תאריך פתיחה', 'תאריך יעד', 'תאריך טסט', 'ימים פתוח',
     'משוייך ל', 'פתח ע"י', 'הודעות צ\'אט', 'תיאור תקלה',
   ]
@@ -92,6 +102,8 @@ export function exportToExcel(tickets: Ticket[], exporterName: string) {
     STATUS_HEB[t.status] || t.status,
     t.priority,
     t.testPhase || '',
+    t.saipemStatus || '',
+    t.saipemNotes || '',
     formatDate(t.openedAt),
     formatDate(t.targetDate),
     formatDate(t.testDate),
@@ -104,7 +116,7 @@ export function exportToExcel(tickets: Ticket[], exporterName: string) {
 
   const wsTickets = XLSX.utils.aoa_to_sheet([headers, ...rows])
   wsTickets['!cols'] = [
-    { wch: 22 }, { wch: 8 }, { wch: 16 }, { wch: 10 }, { wch: 14 },
+    { wch: 22 }, { wch: 8 }, { wch: 16 }, { wch: 10 }, { wch: 14 }, { wch: 14 }, { wch: 30 },
     { wch: 14 }, { wch: 14 }, { wch: 14 }, { wch: 12 },
     { wch: 18 }, { wch: 18 }, { wch: 10 }, { wch: 50 },
   ]
@@ -123,17 +135,17 @@ export function exportToExcel(tickets: Ticket[], exporterName: string) {
   const openRows = tickets
     .filter(t => t.status !== 'סגור')
     .map(t => [
-      t.ticketNumber, t.contractor, t.status, t.priority,
+      t.ticketNumber, t.contractor, t.status, t.priority, t.saipemStatus || '',
       formatDate(t.openedAt), formatDate(t.targetDate), openDays(t),
       t.assignedToName || '', t.description,
     ])
 
   const wsOpen = XLSX.utils.aoa_to_sheet([
-    ['מס׳ תיק', 'קבלן', 'סטטוס', 'עדיפות', 'תאריך פתיחה', 'תאריך יעד', 'ימים פתוח', 'משוייך ל', 'תיאור'],
+    ['מס׳ תיק', 'קבלן', 'סטטוס', 'עדיפות', 'סייפם', 'תאריך פתיחה', 'תאריך יעד', 'ימים פתוח', 'משוייך ל', 'תיאור'],
     ...openRows,
   ])
   wsOpen['!cols'] = [
-    { wch: 22 }, { wch: 8 }, { wch: 16 }, { wch: 10 },
+    { wch: 22 }, { wch: 8 }, { wch: 16 }, { wch: 10 }, { wch: 14 },
     { wch: 14 }, { wch: 14 }, { wch: 12 }, { wch: 18 }, { wch: 50 },
   ]
   wsOpen['!rtl'] = true
@@ -143,3 +155,4 @@ export function exportToExcel(tickets: Ticket[], exporterName: string) {
   const date = new Date().toLocaleDateString('he-IL').replace(/\//g, '-')
   XLSX.writeFile(wb, `TP-Reject-Report-${date}.xlsx`)
 }
+
