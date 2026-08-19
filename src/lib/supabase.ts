@@ -18,6 +18,8 @@ export function rowToTicket(row: Record<string, unknown>): Ticket {
     priority: row.priority as Ticket['priority'],
     description: row.description as string,
     testPhase: (row.test_phase as Ticket['testPhase']) || undefined,
+    saipemStatus: (row.saipem_status as Ticket['saipemStatus']) || undefined,
+    saipemNotes: (row.saipem_notes as string) || undefined,
     targetDate: (row.target_date as string) || undefined,
     testDate: (row.test_date as string) || undefined,
     notes: (row.notes as string) || '',
@@ -45,6 +47,8 @@ export function ticketToRow(t: Ticket): Record<string, unknown> {
     priority: t.priority,
     description: t.description,
     test_phase: t.testPhase ?? null,
+    saipem_status: t.saipemStatus ?? null,
+    saipem_notes: t.saipemNotes ?? null,
     target_date: t.targetDate ?? null,
     test_date: t.testDate ?? null,
     notes: t.notes ?? '',
@@ -59,3 +63,4 @@ export function ticketToRow(t: Ticket): Record<string, unknown> {
     checklist: t.checklist,
   }
 }
+
