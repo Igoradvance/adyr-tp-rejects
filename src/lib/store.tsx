@@ -133,17 +133,23 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => { fetchTickets() }, [fetchTickets])
 
-  // Silent background polling fallback (in case realtime isn't enabled on the table)
+  // Realtime (below) is the primary source of live updates. These are just a
+  // low-frequency safety net in case a realtime event is missed (e.g. dropped
+  // connection) — NOT the primary sync mechanism. Previously this ran a full
+  // table fetch every 10s per open tab regardless of visibility, which alone
+  // accounted for the bulk of our Supabase egress; now it's a 5-minute
+  // fallback poll plus a refetch when the tab regains focus/visibility.
   useEffect(() => {
-    const interval = setInterval(async () => {
-      const { data, error } = await supabase
-        .from('tickets')
-        .select('*')
-        .order('updated_at', { ascending: false })
-      if (!error && data) setTickets(data.map(rowToTicket))
-    }, 10000)
-    return () => clearInterval(interval)
-  }, [])
+    const interval = setInterval(fetchTickets, 5 * 60 * 1000)
+    const onVisible = () => { if (document.visibilityState === 'visible') fetchTickets() }
+    document.addEventListener('visibilitychange', onVisible)
+    window.addEventListener('focus', onVisible)
+    return () => {
+      clearInterval(interval)
+      document.removeEventListener('visibilitychange', onVisible)
+      window.removeEventListener('focus', onVisible)
+    }
+  }, [fetchTickets])
 
   // Realtime
   useEffect(() => {
@@ -394,3 +400,4 @@ export function useStore() {
   if (!ctx) throw new Error('useStore must be used within StoreProvider')
   return ctx
 }
+
