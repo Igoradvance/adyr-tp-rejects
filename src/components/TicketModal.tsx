@@ -109,53 +109,54 @@ export default function TicketModal({ ticketId, onClose }: Props) {
   const doneCount = ticket.checklist.filter(it => it.done).length
 
   return (
-    <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
-      <div className="bg-white rounded-2xl w-full max-w-6xl max-h-[92vh] flex flex-col shadow-2xl border border-gray-100">
+    <div className="fixed inset-0 bg-[rgba(15,31,51,0.55)] z-50 flex items-center justify-center p-4 backdrop-blur-[3px]">
+      <div className="qt-fade-up bg-white rounded-3xl w-full max-w-6xl max-h-[92vh] flex flex-col shadow-lg border border-line">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 flex-shrink-0">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-line flex-shrink-0 bg-[#F8FAFD] rounded-t-3xl">
           <div className="flex items-center gap-3 min-w-0">
             {canEditFields && editMode ? (
               <input
                 value={form.ticketNumber || ''}
                 onChange={e => setForm(p => ({ ...p, ticketNumber: e.target.value }))}
-                className="font-mono font-bold text-gray-900 text-base border border-gray-300 rounded-lg px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500 w-56"
+                className="tp-num text-ink text-base border-[1.5px] border-line bg-white rounded-xl px-3 py-1.5 w-60"
               />
             ) : (
-              <span className="font-mono font-bold text-gray-900 text-lg">{ticket.ticketNumber}</span>
+              <span className="tp-num text-ink text-[19px]">{ticket.ticketNumber}</span>
             )}
-            <span className={`px-2.5 py-0.5 rounded-lg font-bold text-sm flex-shrink-0 ${
+            <span className={`px-2.5 py-[3px] rounded-full font-extrabold text-[12px] flex-shrink-0 ${
               ticket.contractor === 'TMT' ? 'bg-orange-100 text-orange-700' : 'bg-cyan-100 text-cyan-700'
             }`}>
               {ticket.contractor}
             </span>
+            <StatusBadge status={ticket.status} size="md" />
           </div>
 
           <div className="flex items-center gap-2 flex-shrink-0">
             {canEditFields && !editMode && (
               <button
                 onClick={() => setEditMode(true)}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-sm bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors font-medium"
+                className="qt-btn inline-flex items-center gap-1.5 px-3.5 py-2 text-[13px] bg-[#EEF2F7] border border-line text-navy-600 rounded-xl font-bold"
               >
-                <Edit2 size={13} /> ערוך
+                <Edit2 size={13} strokeWidth={2.4} /> ערוך
               </button>
             )}
             {editMode && (
               <>
-                <button onClick={save} className="flex items-center gap-1.5 px-3 py-1.5 text-sm bg-green-600 text-white hover:bg-green-700 rounded-lg transition-colors font-medium">
-                  <Check size={13} /> שמור
+                <button onClick={save} className="qt-btn inline-flex items-center gap-1.5 px-3.5 py-2 text-[13px] bg-emerald-600 text-white rounded-xl font-bold">
+                  <Check size={14} strokeWidth={2.6} /> שמור
                 </button>
-                <button onClick={() => setEditMode(false)} className="px-3 py-1.5 text-sm bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors font-medium">
+                <button onClick={() => setEditMode(false)} className="qt-btn px-3.5 py-2 text-[13px] bg-[#EEF2F7] border border-line text-slate-700 rounded-xl font-semibold">
                   ביטול
                 </button>
               </>
             )}
             {canDelete && (
-              <button onClick={handleDelete} className="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+              <button onClick={handleDelete} title="מחק תקלה" className="qt-btn w-9 h-9 inline-flex items-center justify-center text-red-500 hover:bg-red-50 rounded-xl">
                 <Trash2 size={16} />
               </button>
             )}
-            <button onClick={onClose} className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
-              <X size={18} />
+            <button onClick={onClose} aria-label="סגור" className="qt-btn w-9 h-9 inline-flex items-center justify-center bg-[#EEF2F7] border border-line text-navy-600 rounded-xl">
+              <X size={18} strokeWidth={2.4} />
             </button>
           </div>
         </div>
@@ -165,7 +166,7 @@ export default function TicketModal({ ticketId, onClose }: Props) {
           <div className="lg:col-span-2 space-y-5">
             {/* Description — QC/Admin fill, contractor reads only */}
             <div>
-              <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">
+              <label className="block text-[12.5px] font-bold text-[#3B4A5E] mb-2">
                 תיאור התקלה
                 {isContractor && <span className="mr-2 text-gray-300 font-normal normal-case">(בקרת איכות)</span>}
               </label>
@@ -180,7 +181,7 @@ export default function TicketModal({ ticketId, onClose }: Props) {
                 ) : (
                   <div
                     onClick={() => setEditMode(true)}
-                    className="text-gray-800 text-sm bg-gray-50 hover:bg-gray-100 rounded-xl p-4 leading-relaxed cursor-pointer border-2 border-dashed border-transparent hover:border-gray-300 transition-all whitespace-pre-wrap"
+                    className="text-ink text-sm bg-[#F8FAFD] hover:bg-navy-50 rounded-xl p-4 leading-relaxed cursor-pointer border-[1.5px] border-dashed border-line hover:border-navy-300 transition-all whitespace-pre-wrap"
                   >
                     {ticket.description || <span className="text-gray-400">לחץ להזנת תיאור התקלה...</span>}
                   </div>
@@ -194,7 +195,7 @@ export default function TicketModal({ ticketId, onClose }: Props) {
 
             {/* Checklist — notes to close one by one before full closure */}
             <div>
-              <label className="flex items-center justify-between text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">
+              <label className="flex items-center justify-between text-[12.5px] font-bold text-[#3B4A5E] mb-2">
                 <span>הערות / משימות</span>
                 {ticket.checklist.length > 0 && (
                   <span className={`normal-case text-xs font-bold ${doneCount === ticket.checklist.length ? 'text-green-600' : 'text-blue-600'}`}>
@@ -217,8 +218,8 @@ export default function TicketModal({ ticketId, onClose }: Props) {
                   <p className="text-sm text-gray-400 italic">אין הערות</p>
                 )}
                 {ticket.checklist.map((it, i) => (
-                  <div key={it.id} className={`flex items-start gap-2 p-2 rounded-lg border transition-colors ${
-                    it.done ? 'bg-green-50 border-green-100' : 'bg-white border-gray-200'
+                  <div key={it.id} className={`flex items-start gap-2 p-2.5 rounded-xl border-[1.5px] transition-colors ${
+                    it.done ? 'bg-emerald-50 border-emerald-100' : 'bg-white border-line'
                   }`}>
                     <button
                       onClick={() => toggleItem(it.id)}
@@ -271,7 +272,7 @@ export default function TicketModal({ ticketId, onClose }: Props) {
             {/* Status history */}
             {ticket.statusHistory.length > 0 && (
               <div>
-                <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">היסטוריית שינויי סטטוס</label>
+                <label className="block text-[12.5px] font-bold text-[#3B4A5E] mb-2">היסטוריית שינויי סטטוס</label>
                 <div className="space-y-2">
                   {ticket.statusHistory.map((change, i) => (
                     <div key={change.id} className="flex items-center gap-2 text-xs">
@@ -295,17 +296,17 @@ export default function TicketModal({ ticketId, onClose }: Props) {
           <div className="space-y-5">
             {/* Status */}
             <div>
-              <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">סטטוס</label>
+              <label className="block text-[12.5px] font-bold text-[#3B4A5E] mb-2">סטטוס</label>
               {statuses.length > 0 ? (
                 <div className="flex flex-wrap gap-1.5">
                   {statuses.map(s => (
                     <button
                       key={s}
                       onClick={() => updateStatus(ticket.id, s)}
-                      className={`px-2.5 py-1.5 text-xs rounded-lg border-2 font-medium transition-all ${
+                      className={`qt-btn px-3 py-1.5 text-[12.5px] rounded-xl border-[1.5px] font-bold transition-all ${
                         ticket.status === s
-                          ? 'border-blue-500 bg-blue-50 text-blue-700 shadow-sm'
-                          : 'border-gray-200 text-gray-600 hover:border-gray-400'
+                          ? 'border-navy-600 bg-navy-100 text-navy-600 shadow-[inset_0_0_0_1px_#1B3A5C]'
+                          : 'border-line bg-white text-ink-faint hover:border-navy-300'
                       }`}
                     >
                       {s}
@@ -319,7 +320,7 @@ export default function TicketModal({ ticketId, onClose }: Props) {
 
             {/* Priority */}
             <div>
-              <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">עדיפות</label>
+              <label className="block text-[12.5px] font-bold text-[#3B4A5E] mb-2">עדיפות</label>
               {canEditPriority ? (
                 <select
                   value={editMode ? form.priority || ticket.priority : ticket.priority}
@@ -327,7 +328,7 @@ export default function TicketModal({ ticketId, onClose }: Props) {
                     const v = e.target.value as Priority
                     editMode ? setForm(p => ({ ...p, priority: v })) : updateTicket(ticket.id, { priority: v })
                   }}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full border-[1.5px] border-line bg-[#F8FAFD] rounded-xl px-3 py-2 text-sm"
                 >
                   <option value="גבוהה">גבוהה</option>
                   <option value="בינונית">בינונית</option>
@@ -340,7 +341,7 @@ export default function TicketModal({ ticketId, onClose }: Props) {
 
             {/* Assigned to */}
             <div>
-              <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">משוייך ל</label>
+              <label className="block text-[12.5px] font-bold text-[#3B4A5E] mb-2">משוייך ל</label>
               {canAssign ? (
                 <select
                   value={editMode ? form.assignedToId || '' : ticket.assignedToId || ''}
@@ -353,7 +354,7 @@ export default function TicketModal({ ticketId, onClose }: Props) {
                       updateTicket(ticket.id, { assignedToId: uid, assignedToName: name })
                     }
                   }}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full border-[1.5px] border-line bg-[#F8FAFD] rounded-xl px-3 py-2 text-sm"
                 >
                   <option value="">לא משוייך</option>
                   {contractorUsers.map(u => (
@@ -367,12 +368,12 @@ export default function TicketModal({ ticketId, onClose }: Props) {
 
             {/* Test phase */}
             <div>
-              <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">שלב טסט</label>
+              <label className="block text-[12.5px] font-bold text-[#3B4A5E] mb-2">שלב טסט</label>
               {canEditFields && editMode ? (
                 <select
                   value={form.testPhase || ''}
                   onChange={e => setForm(p => ({ ...p, testPhase: (e.target.value as TestPhase) || undefined }))}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full border-[1.5px] border-line bg-[#F8FAFD] rounded-xl px-3 py-2 text-sm"
                 >
                   <option value="">לא צוין</option>
                   <option value="לפני טסט">לפני טסט</option>
@@ -389,7 +390,7 @@ export default function TicketModal({ ticketId, onClose }: Props) {
 
             {/* SAFEM status */}
             <div>
-              <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">סייפם</label>
+              <label className="block text-[12.5px] font-bold text-[#3B4A5E] mb-2">סייפם</label>
               {canEditFields ? (
                 <select
                   value={editMode ? (form.saipemStatus || '') : (ticket.saipemStatus || '')}
@@ -401,7 +402,7 @@ export default function TicketModal({ ticketId, onClose }: Props) {
                       updateTicket(ticket.id, { saipemStatus: v })
                     }
                   }}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full border-[1.5px] border-line bg-[#F8FAFD] rounded-xl px-3 py-2 text-sm"
                 >
                   <option value="">לא צוין</option>
                   <option value="לפני סייפם">לפני סייפם</option>
@@ -420,7 +421,7 @@ export default function TicketModal({ ticketId, onClose }: Props) {
 
             {/* SAFEM notes */}
             <div>
-              <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">הערות סייפם</label>
+              <label className="block text-[12.5px] font-bold text-[#3B4A5E] mb-2">הערות סייפם</label>
               {canEditFields ? (
                 editMode ? (
                   <textarea
@@ -449,20 +450,20 @@ export default function TicketModal({ ticketId, onClose }: Props) {
 
             {/* Dates */}
             <div>
-              <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">תאריך יעד לסיום</label>
+              <label className="block text-[12.5px] font-bold text-[#3B4A5E] mb-2">תאריך יעד לסיום</label>
               {canEditFields && editMode ? (
                 <input type="date" value={form.targetDate || ''} onChange={e => setForm(p => ({ ...p, targetDate: e.target.value || undefined }))}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                  className="w-full border-[1.5px] border-line bg-[#F8FAFD] rounded-xl px-3 py-2 text-sm" />
               ) : (
                 <span className="text-sm text-gray-700">{ticket.targetDate ? formatDate(ticket.targetDate) : '—'}</span>
               )}
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">תאריך טסט</label>
+              <label className="block text-[12.5px] font-bold text-[#3B4A5E] mb-2">תאריך טסט</label>
               {canEditFields && editMode ? (
                 <input type="date" value={form.testDate || ''} onChange={e => setForm(p => ({ ...p, testDate: e.target.value || undefined }))}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                  className="w-full border-[1.5px] border-line bg-[#F8FAFD] rounded-xl px-3 py-2 text-sm" />
               ) : (
                 <span className="text-sm text-gray-700">{ticket.testDate ? formatDate(ticket.testDate) : '—'}</span>
               )}
@@ -474,7 +475,7 @@ export default function TicketModal({ ticketId, onClose }: Props) {
             )}
 
             {/* Metadata */}
-            <div className="border-t border-gray-100 pt-4 space-y-2.5">
+            <div className="border-t border-line pt-4 space-y-2.5 bg-[#F8FAFD] -mx-1 px-3 pb-3 rounded-xl">
               <MetaRow label="נפתח ע״י" value={ticket.createdByName} />
               <MetaRow label="תאריך פתיחה" value={formatDate(ticket.openedAt)} />
               {ticket.closedAt && <MetaRow label="תאריך סגירה" value={formatDate(ticket.closedAt)} />}
@@ -502,3 +503,4 @@ function MetaRow({ label, value }: { label: string; value: string }) {
     </div>
   )
 }
+

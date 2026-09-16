@@ -3,13 +3,14 @@ import { useState, useRef, useEffect } from 'react'
 import { ChatMessage, UserRole } from '@/types'
 import { useStore } from '@/lib/store'
 import { formatDateTime, markMessagesRead } from '@/lib/utils'
-import { Send, Trash2 } from 'lucide-react'
+import { Send, Trash2, MessageSquareText } from 'lucide-react'
 
 const ROLE_LABELS: Record<UserRole, string> = {
   super_admin: 'סופר אדמין',
   quality_control: 'בקרת איכות',
   contractor_pm: 'מנהל פרוייקט',
   contractor_employee: 'עובד קבלן',
+  viewer: 'צפייה בלבד',
 }
 
 interface Props {
@@ -29,7 +30,7 @@ export default function ChatHistory({ ticketId, messages }: Props) {
 
   useEffect(() => {
     // Only scroll the chat box (not the whole modal) and only when a NEW
-    // message actually arrived — avoids jumping on the 10s background poll.
+    // message actually arrived — avoids jumping on background refreshes.
     if (messages.length > prevCountRef.current && scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight
     }
@@ -48,64 +49,61 @@ export default function ChatHistory({ ticketId, messages }: Props) {
     setConfirmDeleteId(null)
   }
 
+  const DeleteControls = ({ id, mine }: { id: string; mine: boolean }) => {
+    if (!canDelete) return null
+    if (confirmDeleteId === id) {
+      return (
+        <div className={`flex items-center gap-1 mb-1 ${mine ? 'order-first' : ''}`}>
+          <button onClick={() => handleDelete(id)} className="qt-btn text-[11px] px-2 py-0.5 bg-red-600 text-white rounded-full font-bold">מחק</button>
+          <button onClick={() => setConfirmDeleteId(null)} className="qt-btn text-[11px] px-2 py-0.5 bg-[#EEF2F7] text-ink-muted rounded-full font-semibold">ביטול</button>
+        </div>
+      )
+    }
+    return (
+      <button onClick={() => setConfirmDeleteId(id)} className={`mb-1 p-1 text-ink-faint/60 hover:text-red-500 transition-colors ${mine ? 'order-first' : ''}`} aria-label="מחק הודעה">
+        <Trash2 size={12} />
+      </button>
+    )
+  }
+
   return (
     <div>
-      <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">היסטוריית תכתובת</h4>
+      <h4 className="flex items-center gap-2 text-[12.5px] font-bold text-[#3B4A5E] mb-2">
+        <MessageSquareText size={14} className="text-navy-600" strokeWidth={2.4} />
+        היסטוריית תכתובת
+        {messages.length > 0 && <span className="text-[11px] text-ink-faint font-semibold tabular-nums">({messages.length})</span>}
+      </h4>
 
-      <div className="border border-gray-200 rounded-xl overflow-hidden">
-        <div ref={scrollRef} className="h-52 overflow-y-auto p-3 space-y-3 bg-gray-50">
+      <div className="border-[1.5px] border-line rounded-2xl overflow-hidden bg-white">
+        <div ref={scrollRef} className="h-52 overflow-y-auto p-3 space-y-3 bg-[#F8FAFD]">
           {messages.length === 0 ? (
-            <p className="text-center text-gray-400 text-sm py-6">אין הודעות עדיין</p>
+            <p className="text-center text-ink-faint text-sm py-8">אין הודעות עדיין</p>
           ) : (
             messages.map(msg => {
               const isMe = msg.userId === currentUser?.id
-              const isConfirming = confirmDeleteId === msg.id
               return (
                 <div key={msg.id} className={`flex flex-col gap-1 ${isMe ? 'items-end' : 'items-start'}`}>
-                  <div className="flex items-center gap-2 text-xs text-gray-400">
+                  <div className="flex items-center gap-2 text-[11px] text-ink-faint">
                     {isMe ? (
                       <>
-                        <span>{formatDateTime(msg.createdAt)}</span>
-                        <span className="font-medium text-gray-600">{msg.userName}</span>
-                        <span className="text-gray-400">{ROLE_LABELS[msg.userRole]}</span>
+                        <span className="tabular-nums">{formatDateTime(msg.createdAt)}</span>
+                        <span className="font-bold text-ink-muted">{msg.userName}</span>
+                        <span>{ROLE_LABELS[msg.userRole]}</span>
                       </>
                     ) : (
                       <>
-                        <span className="text-gray-400">{ROLE_LABELS[msg.userRole]}</span>
-                        <span className="font-medium text-gray-600">{msg.userName}</span>
-                        <span>{formatDateTime(msg.createdAt)}</span>
+                        <span>{ROLE_LABELS[msg.userRole]}</span>
+                        <span className="font-bold text-ink-muted">{msg.userName}</span>
+                        <span className="tabular-nums">{formatDateTime(msg.createdAt)}</span>
                       </>
                     )}
                   </div>
                   <div className="flex items-end gap-1.5">
-                    {canDelete && !isMe && (
-                      isConfirming ? (
-                        <div className="flex items-center gap-1 mb-1">
-                          <button onClick={() => handleDelete(msg.id)} className="text-xs px-2 py-0.5 bg-red-500 text-white rounded-lg hover:bg-red-600">מחק</button>
-                          <button onClick={() => setConfirmDeleteId(null)} className="text-xs px-2 py-0.5 bg-gray-200 text-gray-600 rounded-lg hover:bg-gray-300">ביטול</button>
-                        </div>
-                      ) : (
-                        <button onClick={() => setConfirmDeleteId(msg.id)} className="mb-1 p-1 text-gray-300 hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100">
-                          <Trash2 size={12} />
-                        </button>
-                      )
-                    )}
-                    {canDelete && isMe && (
-                      isConfirming ? (
-                        <div className="flex items-center gap-1 mb-1 order-first">
-                          <button onClick={() => setConfirmDeleteId(null)} className="text-xs px-2 py-0.5 bg-gray-200 text-gray-600 rounded-lg hover:bg-gray-300">ביטול</button>
-                          <button onClick={() => handleDelete(msg.id)} className="text-xs px-2 py-0.5 bg-red-500 text-white rounded-lg hover:bg-red-600">מחק</button>
-                        </div>
-                      ) : (
-                        <button onClick={() => setConfirmDeleteId(msg.id)} className="mb-1 p-1 text-gray-300 hover:text-red-400 transition-colors order-first">
-                          <Trash2 size={12} />
-                        </button>
-                      )
-                    )}
-                    <div className={`max-w-[85%] px-3 py-2 rounded-2xl text-sm leading-relaxed ${
+                    <DeleteControls id={msg.id} mine={isMe} />
+                    <div className={`max-w-[85%] px-3.5 py-2 rounded-2xl text-sm leading-relaxed shadow-sm ${
                       isMe
-                        ? 'bg-blue-600 text-white rounded-tl-sm'
-                        : 'bg-white text-gray-800 border border-gray-200 rounded-tr-sm'
+                        ? 'bg-navy-600 text-white rounded-tl-md'
+                        : 'bg-white text-ink border-[1.5px] border-line rounded-tr-md'
                     }`}>
                       {msg.message}
                     </div>
@@ -116,27 +114,27 @@ export default function ChatHistory({ ticketId, messages }: Props) {
           )}
         </div>
 
-        {!isViewer && (
-          <div className="border-t border-gray-200 flex items-center gap-2 p-2 bg-white">
+        {!isViewer ? (
+          <div className="border-t border-line flex items-center gap-2 p-2 bg-white">
             <input
               type="text"
               value={text}
               onChange={e => setText(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && !e.shiftKey && send()}
               placeholder="כתוב הודעה ולחץ Enter..."
-              className="flex-1 px-3 py-1.5 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-colors"
+              className="flex-1 px-3.5 py-2 text-sm bg-[#F8FAFD] border-[1.5px] border-line rounded-xl"
             />
             <button
               onClick={send}
               disabled={!text.trim()}
-              className="p-1.5 bg-blue-600 text-white rounded-lg disabled:opacity-40 hover:bg-blue-700 transition-colors flex-shrink-0"
+              className="qt-btn w-10 h-10 inline-flex items-center justify-center bg-teal-500 text-white rounded-xl flex-shrink-0"
+              aria-label="שלח"
             >
-              <Send size={15} />
+              <Send size={16} strokeWidth={2.3} />
             </button>
           </div>
-        )}
-        {isViewer && (
-          <div className="border-t border-gray-200 p-2 bg-gray-50 text-center text-xs text-gray-400">
+        ) : (
+          <div className="border-t border-line p-2 bg-[#F8FAFD] text-center text-[12px] text-ink-faint font-semibold">
             צפייה בלבד — אין אפשרות לשלוח הודעות
           </div>
         )}

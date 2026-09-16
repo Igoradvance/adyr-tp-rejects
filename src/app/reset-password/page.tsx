@@ -2,6 +2,10 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
+import { Lock, KeyRound, CircleCheck, CircleAlert } from 'lucide-react'
+
+const fieldCls = 'w-full border-[1.5px] border-line bg-[#F8FAFD] rounded-xl py-[11px] pr-10 pl-3 text-sm text-left'
+const labelCls = 'flex items-center gap-1.5 text-[12.5px] font-bold text-[#3B4A5E] mb-1.5'
 
 export default function ResetPasswordPage() {
   const router = useRouter()
@@ -36,42 +40,55 @@ export default function ResetPasswordPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-sm border border-gray-100">
-        <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-blue-200">
-            <span className="text-white text-xl font-black">TP</span>
+    <div
+      className="min-h-screen flex items-center justify-center p-4 tp-main"
+      style={{ background: 'radial-gradient(1200px 600px at 10% -10%, rgba(42,157,143,0.35), transparent 60%), linear-gradient(160deg, #0F2A4A 0%, #1B3A5C 60%, #2C5282 100%)' }}
+    >
+      <div className="qt-fade-up bg-white rounded-[24px] px-[26px] pt-[30px] pb-6 w-full max-w-[380px] shadow-xl">
+        <div className="text-center mb-6">
+          <div className="w-16 h-16 rounded-[20px] mx-auto mb-3 bg-navy-100 text-navy-600 flex items-center justify-center">
+            <KeyRound size={30} strokeWidth={2} />
           </div>
-          <h1 className="text-xl font-bold text-gray-900">איפוס סיסמה</h1>
+          <h1 className="text-[20px] font-black text-ink tracking-tight">איפוס סיסמה</h1>
         </div>
 
         {msg ? (
-          <div className="text-center space-y-3">
-            <div className="text-4xl">✅</div>
-            <p className="text-green-600 font-semibold">{msg}</p>
+          <div className="text-center space-y-3 py-2">
+            <div className="w-14 h-14 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto">
+              <CircleCheck size={26} strokeWidth={2.2} />
+            </div>
+            <p className="text-emerald-700 font-bold">{msg}</p>
           </div>
         ) : !ready ? (
-          <div className="text-center space-y-3">
-            <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto" />
-            <p className="text-gray-500 text-sm">מאמת קישור...</p>
+          <div className="text-center space-y-3 py-2">
+            <div className="w-8 h-8 border-4 border-navy-500 border-t-transparent rounded-full animate-spin mx-auto" />
+            <p className="text-ink-muted text-sm font-semibold">מאמת קישור...</p>
           </div>
         ) : (
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-3">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">סיסמה חדשה</label>
-              <input type="password" value={password} onChange={e => setPassword(e.target.value)}
-                placeholder="לפחות 6 תווים" required autoFocus dir="ltr"
-                className="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors" />
+              <label className={labelCls}><Lock size={13} className="text-ink-faint" /> סיסמה חדשה</label>
+              <div className="relative">
+                <Lock size={16} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-ink-faint pointer-events-none" />
+                <input type="password" value={password} onChange={e => setPassword(e.target.value)}
+                  placeholder="לפחות 6 תווים" required autoFocus dir="ltr" className={fieldCls} />
+              </div>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">אימות סיסמה</label>
-              <input type="password" value={confirm} onChange={e => setConfirm(e.target.value)}
-                placeholder="חזור על הסיסמה" required dir="ltr"
-                className="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors" />
+              <label className={labelCls}><Lock size={13} className="text-ink-faint" /> אימות סיסמה</label>
+              <div className="relative">
+                <Lock size={16} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-ink-faint pointer-events-none" />
+                <input type="password" value={confirm} onChange={e => setConfirm(e.target.value)}
+                  placeholder="חזור על הסיסמה" required dir="ltr" className={fieldCls} />
+              </div>
             </div>
-            {error && <div className="bg-red-50 border border-red-200 text-red-600 text-sm px-4 py-2.5 rounded-xl">{error}</div>}
+            {error && (
+              <div className="flex items-center justify-center gap-1.5 text-[13px] text-red-600 font-semibold pt-1">
+                <CircleAlert size={15} /> {error}
+              </div>
+            )}
             <button type="submit" disabled={loading}
-              className="w-full py-3 bg-blue-600 text-white rounded-xl font-semibold text-sm disabled:opacity-50 hover:bg-blue-700 transition-colors shadow-sm">
+              className="qt-btn w-full py-[13px] bg-navy-600 text-white rounded-xl font-bold text-[15px] mt-2">
               {loading ? 'מעדכן...' : 'עדכן סיסמה'}
             </button>
           </form>

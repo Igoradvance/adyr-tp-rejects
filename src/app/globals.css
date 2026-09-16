@@ -2,25 +2,84 @@
 @tailwind components;
 @tailwind utilities;
 
-* {
-  box-sizing: border-box;
+/* ─── ADYR TP Reject — global styles (design system shared with Quality Tracker) ─ */
+:root {
+  --navy-900: #0F2A4A;
+  --navy-700: #1B3A5C;
+  --navy-500: #2C5282;
+  --navy-100: #E3EAF3;
+  --teal-600: #1F8A8A;
+  --teal-500: #2A9D8F;
+  --teal-100: #D6F1EE;
+  --bg:       #F3F6FA;
+  --surface:  #FFFFFF;
+  --border:   #E4EAF2;
+  --text:     #0F1F33;
+  --muted:    #5B6B80;
+  --faint:    #8A99AD;
+  --shadow-sm: 0 1px 2px rgba(15,31,51,0.06), 0 1px 3px rgba(15,31,51,0.04);
+  --shadow-md: 0 4px 14px rgba(15,31,51,0.08), 0 1px 3px rgba(15,31,51,0.05);
+  --shadow-lg: 0 14px 40px rgba(15,31,51,0.14);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-top: env(safe-area-inset-top, 0px);
+  --footer-h: 64px;
 }
 
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
 body {
   direction: rtl;
+  background: var(--bg);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+button, input, select, textarea { font-family: inherit; color: inherit; }
+button { -webkit-tap-highlight-color: transparent; }
+input:focus, select:focus, textarea:focus {
+  outline: none;
+  border-color: var(--teal-500) !important;
+  box-shadow: 0 0 0 3px rgba(42,157,143,0.18);
+}
+input::placeholder, textarea::placeholder { color: #A5B2C2; }
+
+/* Ticket numbers (TP-…): bold Heebo with tabular digits instead of thin mono */
+.tp-num {
+  font-weight: 900;
+  letter-spacing: 0.3px;
+  font-variant-numeric: tabular-nums;
 }
 
-/* Unread chat pulse */
+/* Page shell — leaves room for the fixed footer */
+.tp-main { padding-bottom: calc(var(--footer-h) + 20px + var(--safe-bottom)); }
+
+/* Unread chat pulse (navy tint) */
 @keyframes pulse-blue {
-  0%, 100% { background-color: rgb(239 246 255); }
-  50% { background-color: rgb(147 197 253); }
+  0%, 100% { background-color: #EEF3F9; }
+  50% { background-color: #D6E2F0; }
 }
-.animate-pulse-blue {
-  animation: pulse-blue 3s ease-in-out infinite;
-}
+.animate-pulse-blue { animation: pulse-blue 3s ease-in-out infinite; }
+
+/* Motion */
+@keyframes qt-fade-up { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+.qt-fade-up { animation: qt-fade-up .22s ease-out both; }
+
+/* Interactive surfaces */
+.qt-card { transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease; }
+.qt-card:hover { transform: translateY(-1px); box-shadow: var(--shadow-md); }
+.qt-card:active { transform: translateY(0); }
+.qt-btn { transition: background .15s ease, color .15s ease, transform .1s ease, box-shadow .15s ease, opacity .15s ease; }
+.qt-btn:hover:not(:disabled) { filter: brightness(1.04); }
+.qt-btn:active:not(:disabled) { transform: scale(.985); }
+.qt-btn:disabled { opacity: .55; cursor: not-allowed; }
+.qt-footer-btn:hover { background: rgba(255,255,255,0.18) !important; color: #fff !important; }
 
 /* Custom scrollbar */
-::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { background: #f1f5f9; }
-::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 8px; }
 ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+@media (max-width: 720px) {
+  :root { --footer-h: 74px; }
+}
