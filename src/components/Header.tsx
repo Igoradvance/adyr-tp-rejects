@@ -2,7 +2,7 @@
 import { useState } from 'react'
 import { useStore } from '@/lib/store'
 import { useRouter, usePathname } from 'next/navigation'
-import { LogOut, Plus, KeyRound, ChartColumn, Settings, Users, LayoutDashboard, ClipboardCheck } from 'lucide-react'
+import { LogOut, Plus, KeyRound, BarChart2, Settings, Users, LayoutDashboard, ClipboardCheck } from 'lucide-react'
 import NewTicketModal from './NewTicketModal'
 import UserManagement from './UserManagement'
 import SettingsModal from './SettingsModal'
@@ -91,7 +91,7 @@ export default function Header() {
               </button>
               {isQCOrAdmin && (
                 <button onClick={() => router.push('/kpi')} className={onKpi ? navActive : navIdle} title="דשבורד KPI">
-                  <ChartColumn size={15} strokeWidth={2.3} />
+                  <BarChart2 size={15} strokeWidth={2.3} />
                   <span className="hidden sm:inline">KPI</span>
                 </button>
               )}
