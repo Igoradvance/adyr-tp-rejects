@@ -16,8 +16,14 @@ export const metadata: Metadata = {
   description: 'ADYR TP Reject — מערכת לניהול תקלות על תיקי קבלנים',
   applicationName: 'ADYR TP Reject',
   appleWebApp: { capable: true, title: 'ADYR TP Reject', statusBarStyle: 'default' },
+  manifest: '/manifest.webmanifest',
+  // To change the phone/app icon: replace public/app-icon-source.png (square,
+  // 1024px) and regenerate the sizes below — see CHANGELOG Build 74.
   icons: {
-    icon: '/apple-touch-icon.png',
+    icon: [
+      { url: '/favicon.png', sizes: '48x48', type: 'image/png' },
+      { url: '/icon-192.png', sizes: '192x192', type: 'image/png' },
+    ],
     apple: [{ url: '/apple-touch-icon.png', sizes: '180x180' }],
   },
 }
@@ -42,3 +48,4 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     </html>
   )
 }
+
