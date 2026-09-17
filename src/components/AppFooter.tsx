@@ -35,7 +35,7 @@ export default function AppFooter() {
 
   return (
     <footer
-      className="fixed inset-x-0 bottom-0 z-40 flex flex-wrap items-center justify-center gap-x-2 gap-y-0.5 px-3 pt-1.5 text-center text-[11px] leading-tight text-[#B8C3D1] bg-navy-700 border-t-2 border-teal-600 shadow-[0_-4px_16px_rgba(15,31,51,0.10)]"
+      className="fixed inset-x-0 bottom-0 z-30 flex flex-wrap items-center justify-center gap-x-2 gap-y-0.5 px-3 pt-1.5 text-center text-[11px] leading-tight text-[#B8C3D1] bg-navy-700 border-t-2 border-teal-600 shadow-[0_-4px_16px_rgba(15,31,51,0.10)]"
       style={{ paddingBottom: 'calc(6px + var(--safe-bottom))' }}
     >
       <span

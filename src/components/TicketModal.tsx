@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { Ticket, Status, Priority, TestPhase, SaipemStatus, ChecklistItem } from '@/types'
 import { useStore } from '@/lib/store'
 import StatusBadge from './StatusBadge'
@@ -108,9 +109,13 @@ export default function TicketModal({ ticketId, onClose }: Props) {
   }
   const doneCount = ticket.checklist.filter(it => it.done).length
 
-  return (
-    <div className="fixed inset-0 bg-[rgba(15,31,51,0.55)] z-50 flex items-center justify-center p-4 backdrop-blur-[3px]">
-      <div className="qt-fade-up bg-white rounded-3xl w-full max-w-6xl max-h-[92vh] flex flex-col shadow-lg border border-line">
+  // Portal to <body>: the table card that hosts this component has overflow-hidden
+  // (and ancestors may be transformed), which on iOS Safari turns it into the
+  // containing block for position:fixed — the modal was laid out against the
+  // long table instead of the viewport and got clipped.
+  return createPortal(
+    <div className="fixed inset-0 bg-[rgba(15,31,51,0.55)] z-50 flex items-center justify-center p-2 sm:p-4 backdrop-blur-[3px]">
+      <div className="qt-fade-up bg-white rounded-3xl w-full max-w-6xl max-h-[92vh] max-h-[92dvh] flex flex-col shadow-lg border border-line">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-line flex-shrink-0 bg-[#F8FAFD] rounded-t-3xl">
           <div className="flex items-center gap-3 min-w-0">
@@ -491,7 +496,8 @@ export default function TicketModal({ ticketId, onClose }: Props) {
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }
 

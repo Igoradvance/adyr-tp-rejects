@@ -116,7 +116,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Table card: filters + bulk + rows */}
-        <div className="qt-fade-up bg-white border-[1.5px] border-line rounded-2xl shadow-sm overflow-hidden">
+        <div className="bg-white border-[1.5px] border-line rounded-2xl shadow-sm overflow-hidden">
           <Filters />
           {selectedIds.length > 0 && <BulkActions />}
           <TicketTable />
