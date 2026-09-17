@@ -1,8 +1,8 @@
 'use client'
 import { useState } from 'react'
 import { useStore } from '@/lib/store'
-import { useRouter } from 'next/navigation'
-import { LogOut, Plus, KeyRound, BarChart2, Settings } from 'lucide-react'
+import { useRouter, usePathname } from 'next/navigation'
+import { LogOut, Plus, KeyRound, BarChart2, Settings, Users, LayoutDashboard, ClipboardCheck } from 'lucide-react'
 import NewTicketModal from './NewTicketModal'
 import UserManagement from './UserManagement'
 import SettingsModal from './SettingsModal'
@@ -17,9 +17,14 @@ const ROLE_LABELS: Record<UserRole, string> = {
   viewer: 'צפייה בלבד',
 }
 
+const navBtn = 'qt-btn inline-flex items-center gap-2 px-3.5 py-2 rounded-[10px] text-[13.5px] font-bold whitespace-nowrap'
+const navIdle = `${navBtn} text-ink-muted hover:bg-navy-100`
+const navActive = `${navBtn} bg-navy-600 text-white shadow-sm`
+
 export default function Header() {
   const { currentUser, logout } = useStore()
   const router = useRouter()
+  const pathname = usePathname()
   const [showNew, setShowNew] = useState(false)
   const [showUsers, setShowUsers] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
@@ -27,6 +32,7 @@ export default function Header() {
   const [newPassword, setNewPassword] = useState('')
   const [pwMsg, setPwMsg] = useState('')
   const [pwLoading, setPwLoading] = useState(false)
+  const [logoOk, setLogoOk] = useState(true)
 
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -39,74 +45,89 @@ export default function Header() {
   }
 
   const isViewer = currentUser?.role === 'viewer'
-  const canCreate = !isViewer && (currentUser?.role === 'super_admin' || currentUser?.role === 'quality_control')
+  const isQCOrAdmin = currentUser?.role === 'super_admin' || currentUser?.role === 'quality_control'
+  const canCreate = !isViewer && isQCOrAdmin
   const canManageUsers = currentUser?.role === 'super_admin'
+  const onKpi = pathname?.startsWith('/kpi')
 
   return (
     <>
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-40 shadow-sm">
-        <div className="max-w-[1600px] mx-auto px-6 py-3 flex items-center justify-between gap-4">
+      <header
+        className="bg-white border-b border-line sticky top-0 z-40 shadow-sm"
+        style={{ paddingTop: 'var(--safe-top)' }}
+      >
+        <div className="px-4 sm:px-6 py-2.5 flex items-center justify-between gap-3 flex-wrap">
           {/* Logo */}
-          <div className="flex items-center gap-3 flex-shrink-0">
-            <div className="w-9 h-9 bg-blue-600 rounded-xl flex items-center justify-center shadow-sm shadow-blue-200">
-              <span className="text-white text-sm font-black tracking-tight">TP</span>
+          <button
+            onClick={() => router.push('/dashboard')}
+            className="flex items-center gap-3 min-w-0 flex-shrink-0 text-right"
+            title="לדשבורד"
+          >
+            {logoOk ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src="/logo.png"
+                alt="ADYR"
+                onError={() => setLogoOk(false)}
+                className="h-11 w-auto max-w-[min(220px,48vw)] object-contain block"
+              />
+            ) : (
+              <div className="w-10 h-10 rounded-xl bg-navy-100 text-navy-600 flex items-center justify-center">
+                <ClipboardCheck size={22} strokeWidth={2.2} />
+              </div>
+            )}
+            <div className="hidden md:block leading-tight border-r border-line pr-3">
+              <p className="text-[15px] font-extrabold text-ink tracking-tight">TP Reject</p>
+              <p className="text-[12px] text-ink-muted font-semibold">ניהול תקלות על תיקי קבלנים</p>
             </div>
-            <div className="hidden sm:block">
-              <p className="text-sm font-bold text-gray-900 leading-tight">מערכת ניהול תקלות</p>
-              <p className="text-xs text-gray-400 leading-tight">TP Reject Management</p>
-            </div>
-          </div>
+          </button>
 
-          {/* Actions */}
-          <div className="flex items-center gap-3">
-            {(currentUser?.role === 'super_admin' || currentUser?.role === 'quality_control') && (
-              <button
-                onClick={() => router.push('/kpi')}
-                className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-xl text-sm font-semibold hover:bg-gray-200 transition-colors"
-                title="דשבורד KPI"
-              >
-                <BarChart2 size={15} />
-                <span className="hidden sm:inline">KPI</span>
+          {/* Nav + actions */}
+          <div className="flex items-center gap-2 flex-wrap">
+            <nav className="flex items-center gap-1 p-1 bg-[#EEF2F7] border border-line rounded-[14px]">
+              <button onClick={() => router.push('/dashboard')} className={!onKpi ? navActive : navIdle} title="תקלות">
+                <LayoutDashboard size={15} strokeWidth={2.3} />
+                <span className="hidden sm:inline">תקלות</span>
               </button>
-            )}
-            {canManageUsers && (
-              <button
-                onClick={() => setShowUsers(true)}
-                className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-xl text-sm font-semibold hover:bg-gray-200 transition-colors"
-              >
-                <span>👥</span>
-                <span className="hidden sm:inline">משתמשים</span>
-              </button>
-            )}
-            {canManageUsers && (
-              <button
-                onClick={() => setShowSettings(true)}
-                className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-xl text-sm font-semibold hover:bg-gray-200 transition-colors"
-                title="הגדרות מערכת"
-              >
-                <Settings size={15} />
-                <span className="hidden sm:inline">הגדרות</span>
-              </button>
-            )}
+              {isQCOrAdmin && (
+                <button onClick={() => router.push('/kpi')} className={onKpi ? navActive : navIdle} title="דשבורד KPI">
+                  <BarChart2 size={15} strokeWidth={2.3} />
+                  <span className="hidden sm:inline">KPI</span>
+                </button>
+              )}
+              {canManageUsers && (
+                <button onClick={() => setShowUsers(true)} className={navIdle} title="ניהול משתמשים">
+                  <Users size={15} strokeWidth={2.3} />
+                  <span className="hidden sm:inline">משתמשים</span>
+                </button>
+              )}
+              {canManageUsers && (
+                <button onClick={() => setShowSettings(true)} className={navIdle} title="הגדרות מערכת">
+                  <Settings size={15} strokeWidth={2.3} />
+                  <span className="hidden sm:inline">הגדרות</span>
+                </button>
+              )}
+            </nav>
+
             {canCreate && (
               <button
                 onClick={() => setShowNew(true)}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl text-sm font-semibold hover:bg-blue-700 transition-colors shadow-sm shadow-blue-200"
+                className="qt-btn inline-flex items-center gap-2 px-4 py-2.5 bg-teal-500 text-white rounded-xl text-[13.5px] font-bold shadow-sm"
               >
-                <Plus size={15} />
+                <Plus size={16} strokeWidth={2.5} />
                 <span className="hidden sm:inline">תקלה חדשה</span>
                 <span className="sm:hidden">חדש</span>
               </button>
             )}
 
             {/* User chip */}
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-50 border border-gray-200 rounded-xl">
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-navy-100 border border-line rounded-xl">
               <div className="text-right leading-tight">
-                <p className="text-sm font-semibold text-gray-900">{currentUser?.name}</p>
-                <p className="text-xs text-gray-400">{ROLE_LABELS[currentUser?.role || 'contractor_employee']}</p>
+                <p className="text-[13px] font-bold text-navy-600">{currentUser?.name}</p>
+                <p className="text-[11px] text-ink-muted font-semibold">{ROLE_LABELS[currentUser?.role || 'contractor_employee']}</p>
               </div>
               {currentUser?.contractor && (
-                <span className={`px-2 py-0.5 rounded-lg text-xs font-bold flex-shrink-0 ${
+                <span className={`px-2 py-0.5 rounded-full text-[11px] font-extrabold flex-shrink-0 ${
                   currentUser.contractor === 'TMT' ? 'bg-orange-100 text-orange-700' : 'bg-cyan-100 text-cyan-700'
                 }`}>
                   {currentUser.contractor}
@@ -117,17 +138,19 @@ export default function Header() {
             <button
               onClick={() => { setShowPassword(true); setPwMsg('') }}
               title="שנה סיסמה"
-              className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-xl transition-colors"
+              aria-label="שנה סיסמה"
+              className="qt-btn w-10 h-10 inline-flex items-center justify-center rounded-xl bg-[#EEF2F7] border border-line text-navy-600"
             >
-              <KeyRound size={17} />
+              <KeyRound size={17} strokeWidth={2.2} />
             </button>
 
             <button
               onClick={() => { logout(); router.push('/login') }}
               title="יציאה"
-              className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-xl transition-colors"
+              aria-label="יציאה"
+              className="qt-btn w-10 h-10 inline-flex items-center justify-center rounded-xl bg-[#EEF2F7] border border-line text-navy-600"
             >
-              <LogOut size={17} />
+              <LogOut size={17} strokeWidth={2.2} />
             </button>
           </div>
         </div>
@@ -137,33 +160,36 @@ export default function Header() {
       {showUsers && <UserManagement onClose={() => setShowUsers(false)} />}
       {showSettings && <SettingsModal onClose={() => setShowSettings(false)} />}
       {showPassword && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-sm">
-            <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-              <KeyRound size={18} className="text-blue-600" /> שינוי סיסמה
+        <div className="fixed inset-0 bg-[rgba(15,31,51,0.55)] z-50 flex items-center justify-center p-4 backdrop-blur-[3px]">
+          <div className="qt-fade-up bg-white rounded-3xl shadow-lg p-6 w-full max-w-sm border border-line">
+            <h2 className="text-lg font-extrabold text-ink mb-4 flex items-center gap-2.5">
+              <span className="w-9 h-9 rounded-xl bg-navy-100 text-navy-600 inline-flex items-center justify-center">
+                <KeyRound size={18} strokeWidth={2.3} />
+              </span>
+              שינוי סיסמה
             </h2>
             <form onSubmit={handleChangePassword} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">סיסמה חדשה</label>
+                <label className="block text-[12.5px] font-bold text-[#3B4A5E] mb-1.5">סיסמה חדשה</label>
                 <input
                   type="password" value={newPassword}
                   onChange={e => setNewPassword(e.target.value)}
                   placeholder="לפחות 6 תווים" dir="ltr" autoFocus
-                  className="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full border-[1.5px] border-line bg-[#F8FAFD] rounded-xl px-4 py-2.5 text-sm"
                 />
               </div>
               {pwMsg && (
-                <p className={`text-sm px-3 py-2 rounded-lg ${pwMsg.includes('הצלחה') ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'}`}>
+                <p className={`text-sm px-3 py-2 rounded-xl border-[1.5px] ${pwMsg.includes('הצלחה') ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-red-50 border-red-200 text-red-700'}`}>
                   {pwMsg}
                 </p>
               )}
               <div className="flex gap-2">
                 <button type="submit" disabled={pwLoading}
-                  className="flex-1 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-semibold hover:bg-blue-700 disabled:opacity-50 transition-colors">
+                  className="qt-btn flex-1 py-2.5 bg-navy-600 text-white rounded-xl text-sm font-bold">
                   {pwLoading ? 'מעדכן...' : 'עדכן סיסמה'}
                 </button>
                 <button type="button" onClick={() => { setShowPassword(false); setNewPassword(''); setPwMsg('') }}
-                  className="px-4 py-2.5 bg-gray-100 text-gray-700 rounded-xl text-sm hover:bg-gray-200 transition-colors">
+                  className="qt-btn px-4 py-2.5 bg-[#EEF2F7] text-slate-700 rounded-xl text-sm font-semibold">
                   ביטול
                 </button>
               </div>

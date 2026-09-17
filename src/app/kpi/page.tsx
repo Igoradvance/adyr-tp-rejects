@@ -9,13 +9,13 @@ import {
 } from 'recharts'
 
 const STATUS_COLORS: Record<string, string> = {
-  'פתוח': '#ef4444',
-  'בטיפול': '#3b82f6',
-  'ממתין לאישור': '#f59e0b',
-  'סגור': '#22c55e',
+  'פתוח': '#DC2626',
+  'בטיפול': '#2C5282',
+  'ממתין לאישור': '#D97706',
+  'סגור': '#059669',
 }
-const CONTRACTOR_COLORS = { TMT: '#f97316', EBS: '#06b6d4' }
-const PRIORITY_COLORS: Record<string, string> = { 'גבוהה': '#ef4444', 'בינונית': '#f59e0b', 'נמוכה': '#22c55e' }
+const CONTRACTOR_COLORS = { TMT: '#EA580C', EBS: '#0891B2' }
+const PRIORITY_COLORS: Record<string, string> = { 'גבוהה': '#DC2626', 'בינונית': '#D97706', 'נמוכה': '#059669' }
 
 function openDays(ticket: { openedAt: string; closedAt?: string; status: string }) {
   const start = new Date(ticket.openedAt)
@@ -25,8 +25,8 @@ function openDays(ticket: { openedAt: string; closedAt?: string; status: string 
 
 function KPICard({ label, value, sub, color }: { label: string; value: string | number; sub?: string; color: string }) {
   return (
-    <div className={`bg-white rounded-2xl p-5 shadow-sm border-r-4 ${color}`}>
-      <div className="text-3xl font-black text-gray-900 mb-1">{value}</div>
+    <div className={`qt-card bg-white rounded-2xl p-5 shadow-sm border-[1.5px] border-line border-r-4 ${color}`}>
+      <div className="text-3xl font-black text-ink mb-1 tabular-nums">{value}</div>
       <div className="text-sm font-semibold text-gray-700">{label}</div>
       {sub && <div className="text-xs text-gray-400 mt-0.5">{sub}</div>}
     </div>
@@ -46,13 +46,18 @@ const CustomTooltip = ({ active, payload, label }: { active?: boolean; payload?:
 }
 
 export default function KPIPage() {
-  const { currentUser, tickets } = useStore()
+  const { currentUser, authLoading, tickets } = useStore()
   const router = useRouter()
 
   useEffect(() => {
-    if (!currentUser) router.replace('/login')
-  }, [currentUser, router])
+    if (!authLoading && !currentUser) router.replace('/login')
+  }, [authLoading, currentUser, router])
 
+  if (authLoading) return (
+    <div className="min-h-screen flex items-center justify-center">
+      <div className="w-10 h-10 border-4 border-navy-500 border-t-transparent rounded-full animate-spin" />
+    </div>
+  )
   if (!currentUser) return null
 
   const visible = tickets.filter(t => {
@@ -105,7 +110,7 @@ export default function KPIPage() {
   }))
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen tp-main">
       <Header />
       <main className="max-w-[1400px] mx-auto px-4 sm:px-6 py-6 space-y-6">
 
@@ -245,3 +250,4 @@ export default function KPIPage() {
     </div>
   )
 }
+

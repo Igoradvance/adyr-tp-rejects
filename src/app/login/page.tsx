@@ -2,8 +2,12 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useStore } from '@/lib/store'
-import { VERSION, BUILD, BUILD_DATE } from '@/lib/version'
+import { VERSION, BUILD } from '@/lib/version'
 import { supabase } from '@/lib/supabase'
+import { Mail, Lock, LogIn, CircleAlert, MailCheck, ArrowRight, ClipboardCheck } from 'lucide-react'
+
+const fieldCls = 'w-full border-[1.5px] border-line bg-[#F8FAFD] rounded-xl py-[11px] pr-10 pl-3 text-sm'
+const labelCls = 'flex items-center gap-1.5 text-[12.5px] font-bold text-[#3B4A5E] mb-1.5'
 
 export default function LoginPage() {
   const { login, currentUser, authLoading } = useStore()
@@ -15,6 +19,7 @@ export default function LoginPage() {
   const [resetMode, setResetMode] = useState(false)
   const [resetSent, setResetSent] = useState(false)
   const [resetLoading, setResetLoading] = useState(false)
+  const [logoOk, setLogoOk] = useState(true)
 
   const handleReset = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -39,109 +44,126 @@ export default function LoginPage() {
     setLoading(true)
     const err = await login(email.trim(), password)
     if (err) {
-      setError(err)
+      setError(err === 'Invalid login credentials' ? 'אימייל או סיסמה שגויים' : err)
       setLoading(false)
     } else {
       router.replace('/dashboard')
     }
   }
 
-  if (authLoading) return (
-    <div className="min-h-screen flex items-center justify-center">
-      <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
+  const shell = (children: React.ReactNode) => (
+    <div
+      className="min-h-screen flex items-center justify-center p-4 tp-main"
+      style={{ background: 'radial-gradient(1200px 600px at 10% -10%, rgba(42,157,143,0.35), transparent 60%), linear-gradient(160deg, #0F2A4A 0%, #1B3A5C 60%, #2C5282 100%)' }}
+    >
+      {children}
     </div>
   )
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-sm border border-gray-100">
-        <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-blue-200">
-            <span className="text-white text-xl font-black">TP</span>
-          </div>
-          <h1 className="text-2xl font-bold text-gray-900">מערכת ניהול תקלות</h1>
-          <p className="text-gray-400 text-sm mt-1">Advance Engineering</p>
-        </div>
+  if (authLoading) return shell(
+    <div className="w-9 h-9 border-4 border-white/70 border-t-transparent rounded-full animate-spin" />
+  )
 
-        {/* Reset mode */}
-        {resetMode ? (
-          resetSent ? (
-            <div className="text-center space-y-4">
-              <div className="text-4xl mb-2">📧</div>
-              <p className="text-gray-700 font-semibold">נשלח מייל לאיפוס סיסמה</p>
-              <p className="text-gray-400 text-sm">בדוק את תיבת הדואר שלך ולחץ על הקישור</p>
-              <button onClick={() => { setResetMode(false); setResetSent(false) }}
-                className="text-blue-600 text-sm underline">חזור לכניסה</button>
-            </div>
-          ) : (
-            <form onSubmit={handleReset} className="space-y-4">
-              <p className="text-sm text-gray-500 text-right">הכנס את האימייל שלך ונשלח קישור לאיפוס סיסמה</p>
-              <input type="email" value={email} onChange={e => setEmail(e.target.value)}
-                placeholder="your@email.com" required autoFocus dir="ltr"
-                className="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors" />
-              {error && <div className="bg-red-50 border border-red-200 text-red-600 text-sm px-4 py-2.5 rounded-xl">{error}</div>}
-              <button type="submit" disabled={resetLoading}
-                className="w-full py-3 bg-blue-600 text-white rounded-xl font-semibold text-sm disabled:opacity-50 hover:bg-blue-700 transition-colors">
-                {resetLoading ? 'שולח...' : 'שלח קישור לאיפוס'}
-              </button>
-              <button type="button" onClick={() => { setResetMode(false); setError('') }}
-                className="w-full py-2 text-gray-500 text-sm hover:text-gray-700">← חזור לכניסה</button>
-            </form>
-          )
+  return shell(
+    <div className="qt-fade-up bg-white rounded-[24px] px-[26px] pt-[30px] pb-6 w-full max-w-[380px] shadow-xl">
+      <div className="text-center mb-6">
+        {logoOk ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src="/logo.png" alt="ADYR" onError={() => setLogoOk(false)}
+            className="w-full max-w-[300px] h-auto block mx-auto mb-1" />
         ) : (
+          <>
+            <div className="w-16 h-16 rounded-[20px] mx-auto mb-2.5 bg-navy-100 text-navy-600 flex items-center justify-center">
+              <ClipboardCheck size={32} strokeWidth={2} />
+            </div>
+            <h1 className="text-[22px] font-black text-navy-600 tracking-tight">ADYR TP Reject</h1>
+          </>
+        )}
+        <p className="text-[13px] text-ink-muted mt-2 font-medium">
+          {resetMode ? 'איפוס סיסמה למערכת ניהול התקלות' : 'כניסה למערכת ניהול תקלות על תיקי קבלנים'}
+        </p>
+      </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">אימייל</label>
-            <input
-              type="email"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              placeholder="your@email.com"
-              required
-              autoFocus
-              className="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-              dir="ltr"
-            />
+      {resetMode ? (
+        resetSent ? (
+          <div className="text-center space-y-3 py-2">
+            <div className="w-14 h-14 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto">
+              <MailCheck size={26} strokeWidth={2.2} />
+            </div>
+            <p className="text-ink font-bold">נשלח מייל לאיפוס סיסמה</p>
+            <p className="text-ink-muted text-sm">בדוק את תיבת הדואר שלך ולחץ על הקישור</p>
+            <button onClick={() => { setResetMode(false); setResetSent(false) }}
+              className="qt-btn inline-flex items-center gap-1.5 text-navy-500 text-sm font-bold mt-1">
+              <ArrowRight size={15} /> חזור לכניסה
+            </button>
           </div>
-
+        ) : (
+          <form onSubmit={handleReset} className="space-y-3">
+            <p className="text-[13px] text-ink-muted">הכנס את האימייל שלך ונשלח קישור לאיפוס סיסמה</p>
+            <div>
+              <label className={labelCls}><Mail size={13} className="text-ink-faint" /> אימייל</label>
+              <div className="relative">
+                <Mail size={16} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-ink-faint pointer-events-none" />
+                <input type="email" value={email} onChange={e => { setEmail(e.target.value); setError('') }}
+                  placeholder="your@email.com" required autoFocus dir="ltr" className={`${fieldCls} text-left`} />
+              </div>
+            </div>
+            {error && (
+              <div className="flex items-center justify-center gap-1.5 text-[13px] text-red-600 font-semibold">
+                <CircleAlert size={15} /> {error}
+              </div>
+            )}
+            <button type="submit" disabled={resetLoading}
+              className="qt-btn w-full inline-flex items-center justify-center gap-2 py-[13px] bg-navy-600 text-white rounded-xl font-bold text-[15px] mt-1">
+              {resetLoading ? 'שולח...' : 'שלח קישור לאיפוס'}
+            </button>
+            <button type="button" onClick={() => { setResetMode(false); setError('') }}
+              className="qt-btn w-full inline-flex items-center justify-center gap-1.5 py-2 text-ink-faint text-[13px] font-semibold">
+              <ArrowRight size={14} /> חזור לכניסה
+            </button>
+          </form>
+        )
+      ) : (
+        <form onSubmit={handleSubmit} className="space-y-3">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">סיסמה</label>
-            <input
-              type="password"
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              placeholder="••••••••"
-              required
-              className="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-              dir="ltr"
-            />
+            <label className={labelCls}><Mail size={13} className="text-ink-faint" /> אימייל</label>
+            <div className="relative">
+              <Mail size={16} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-ink-faint pointer-events-none" />
+              <input type="email" value={email} onChange={e => { setEmail(e.target.value); setError('') }}
+                placeholder="your@email.com" required autoFocus dir="ltr" autoComplete="username"
+                className={`${fieldCls} text-left`} />
+            </div>
+          </div>
+          <div>
+            <label className={labelCls}><Lock size={13} className="text-ink-faint" /> סיסמה</label>
+            <div className="relative">
+              <Lock size={16} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-ink-faint pointer-events-none" />
+              <input type="password" value={password} onChange={e => { setPassword(e.target.value); setError('') }}
+                placeholder="הזן סיסמה" required dir="ltr" autoComplete="current-password"
+                className={`${fieldCls} text-left`} />
+            </div>
           </div>
 
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-600 text-sm px-4 py-2.5 rounded-xl">
-              {error}
+            <div className="flex items-center justify-center gap-1.5 text-[13px] text-red-600 font-semibold pt-1">
+              <CircleAlert size={15} /> {error}
             </div>
           )}
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full py-3 bg-blue-600 text-white rounded-xl font-semibold text-sm disabled:opacity-50 hover:bg-blue-700 transition-colors shadow-sm mt-2"
-          >
-            {loading ? 'מתחבר...' : 'כניסה למערכת'}
+          <button type="submit" disabled={loading}
+            className="qt-btn w-full inline-flex items-center justify-center gap-2 py-[13px] bg-navy-600 text-white rounded-xl font-bold text-[15px] mt-2">
+            <LogIn size={17} strokeWidth={2.3} />
+            {loading ? 'מתחבר...' : 'כניסה'}
           </button>
           <button type="button" onClick={() => { setResetMode(true); setError('') }}
-            className="w-full text-center text-sm text-blue-500 hover:text-blue-700 pt-1">
+            className="qt-btn w-full text-center text-[13px] text-ink-faint hover:text-navy-500 font-semibold pt-1">
             שכחתי סיסמה
           </button>
         </form>
-        )}
+      )}
 
-        <div className="text-center text-xs text-gray-400 mt-6 space-y-0.5">
-          <p>© 2026 Igor Ositchansky – Advance Engineering. כל הזכויות שמורות.</p>
-          <p>v{VERSION} · Build {BUILD} · {BUILD_DATE}</p>
-        </div>
+      <div className="text-center mt-4 text-[10px] text-[#B8C3D1] tracking-wide tabular-nums" dir="ltr">
+        v{VERSION} · Build {BUILD} · Quality today. Safer tomorrow.
       </div>
     </div>
   )

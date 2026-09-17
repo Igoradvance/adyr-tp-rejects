@@ -155,10 +155,16 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const ch = supabase.channel('tickets-rt')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'tickets' }, (payload) => {
-        setTickets(prev => [rowToTicket(payload.new as Record<string, unknown>), ...prev])
+        const row = payload.new as Record<string, unknown>
+        // Optimistic insert already added it locally — don't duplicate the row.
+        setTickets(prev => prev.some(t => t.id === row.id) ? prev : [rowToTicket(row), ...prev])
       })
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'tickets' }, (payload) => {
-        setTickets(prev => prev.map(t => t.id === (payload.new as Record<string, unknown>).id ? rowToTicket(payload.new as Record<string, unknown>) : t))
+        const row = payload.new as Record<string, unknown>
+        // Postgres omits unchanged TOASTed columns (large jsonb: chat_messages,
+        // checklist, status_history) from UPDATE payloads. Overlay the incoming
+        // row on the existing one so those fields aren't wiped to [] mid-session.
+        setTickets(prev => prev.map(t => t.id === row.id ? rowToTicket({ ...ticketToRow(t), ...row }) : t))
       })
       .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'tickets' }, (payload) => {
         setTickets(prev => prev.filter(t => t.id !== (payload.old as Record<string, unknown>).id))
@@ -400,4 +406,5 @@ export function useStore() {
   if (!ctx) throw new Error('useStore must be used within StoreProvider')
   return ctx
 }
+
 

@@ -2,7 +2,7 @@
 import { useState } from 'react'
 import { useStore } from '@/lib/store'
 import { Status } from '@/types'
-import { X, Zap, Trash2 } from 'lucide-react'
+import { X, ListChecks, Trash2 } from 'lucide-react'
 
 export default function BulkActions() {
   const { selectedIds, clearSelection, bulkUpdateStatus, deleteTicket, currentUser } = useStore()
@@ -28,19 +28,19 @@ export default function BulkActions() {
   if (statuses.length === 0) return null
 
   return (
-    <div className="border-x border-b border-gray-200 bg-blue-50 px-4 py-2.5 flex items-center gap-3 flex-wrap">
-      <div className="flex items-center gap-2 text-sm font-medium text-blue-700">
-        <Zap size={15} />
+    <div className="qt-fade-up border-b border-line bg-navy-100 px-3 sm:px-4 py-2.5 flex items-center gap-3 flex-wrap">
+      <div className="flex items-center gap-2 text-[13px] font-bold text-navy-600">
+        <ListChecks size={16} strokeWidth={2.4} />
         {selectedIds.length} תקלות נבחרו
       </div>
 
-      <div className="flex items-center gap-2 flex-wrap">
-        <span className="text-xs text-gray-500">שנה סטטוס:</span>
+      <div className="flex items-center gap-1.5 flex-wrap">
+        <span className="text-[12px] text-ink-muted font-semibold">שנה סטטוס:</span>
         {statuses.map(status => (
           <button
             key={status}
             onClick={() => bulkUpdateStatus(selectedIds, status)}
-            className="px-3 py-1 text-xs font-medium bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:border-gray-400 transition-colors shadow-sm"
+            className="qt-btn px-3 py-1 text-[12px] font-bold bg-white border-[1.5px] border-line rounded-full text-navy-600 shadow-sm hover:border-navy-400"
           >
             {status}
           </button>
@@ -50,19 +50,19 @@ export default function BulkActions() {
       {currentUser?.role === 'super_admin' && (
         confirming ? (
           <div className="flex items-center gap-2 mr-auto">
-            <span className="text-xs text-red-600 font-medium">למחוק {selectedIds.length} תקלות?</span>
+            <span className="text-[12px] text-red-700 font-bold">למחוק {selectedIds.length} תקלות?</span>
             <button onClick={handleBulkDelete}
-              className="px-3 py-1 text-xs font-medium bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
+              className="qt-btn px-3 py-1 text-[12px] font-bold bg-red-600 text-white rounded-full">
               אשר מחיקה
             </button>
             <button onClick={() => setConfirming(false)}
-              className="px-3 py-1 text-xs bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition-colors">
+              className="qt-btn px-3 py-1 text-[12px] font-semibold bg-white border border-line text-ink-muted rounded-full">
               ביטול
             </button>
           </div>
         ) : (
           <button onClick={() => setConfirming(true)}
-            className="mr-auto flex items-center gap-1.5 px-3 py-1 text-xs font-medium text-red-600 border border-red-200 bg-red-50 rounded-lg hover:bg-red-100 transition-colors">
+            className="qt-btn mr-auto inline-flex items-center gap-1.5 px-3 py-1 text-[12px] font-bold text-red-700 border-[1.5px] border-red-200 bg-red-50 rounded-full">
             <Trash2 size={13} />
             מחק נבחרות
           </button>
@@ -71,9 +71,9 @@ export default function BulkActions() {
 
       <button
         onClick={clearSelection}
-        className={`${currentUser?.role !== 'super_admin' ? 'mr-auto' : ''} flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700 transition-colors`}
+        className={`${currentUser?.role !== 'super_admin' ? 'mr-auto' : ''} qt-btn inline-flex items-center gap-1 text-[12px] font-semibold text-ink-muted hover:text-ink`}
       >
-        <X size={13} />
+        <X size={13} strokeWidth={2.6} />
         בטל בחירה
       </button>
     </div>
