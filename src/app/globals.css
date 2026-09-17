@@ -22,7 +22,7 @@
   --shadow-lg: 0 14px 40px rgba(15,31,51,0.14);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
   --safe-top: env(safe-area-inset-top, 0px);
-  --footer-h: 64px;
+  --footer-h: 32px;
 }
 
 * { box-sizing: border-box; }
@@ -81,5 +81,6 @@ input::placeholder, textarea::placeholder { color: #A5B2C2; }
 ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 
 @media (max-width: 720px) {
-  :root { --footer-h: 74px; }
+  :root { --footer-h: 50px; }
 }
+
