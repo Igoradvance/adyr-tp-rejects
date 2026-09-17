@@ -69,17 +69,13 @@ export default function Header() {
                 src="/logo.png"
                 alt="ADYR"
                 onError={() => setLogoOk(false)}
-                className="h-11 w-auto max-w-[min(220px,48vw)] object-contain block"
+                className="h-12 w-auto max-w-[min(260px,52vw)] object-contain block"
               />
             ) : (
               <div className="w-10 h-10 rounded-xl bg-navy-100 text-navy-600 flex items-center justify-center">
                 <ClipboardCheck size={22} strokeWidth={2.2} />
               </div>
             )}
-            <div className="hidden md:block leading-tight border-r border-line pr-3">
-              <p className="text-[15px] font-extrabold text-ink tracking-tight">TP Reject</p>
-              <p className="text-[12px] text-ink-muted font-semibold">ניהול תקלות על תיקי קבלנים</p>
-            </div>
           </button>
 
           {/* Nav + actions */}
@@ -200,3 +196,4 @@ export default function Header() {
     </>
   )
 }
+
