@@ -31,6 +31,11 @@ export default function AppFooter() {
   // worked — clear the guard so a future stale-deploy can auto-recover again.
   useEffect(() => {
     try { sessionStorage.removeItem(CHUNK_RELOAD_KEY) } catch { /* ignore */ }
+    // Safari/iOS may restore a frozen tab from the back-forward cache with the
+    // JS runtime dead → blank page until a manual refresh. Reload on restore.
+    const onPageShow = (e: PageTransitionEvent) => { if (e.persisted) window.location.reload() }
+    window.addEventListener('pageshow', onPageShow)
+    return () => window.removeEventListener('pageshow', onPageShow)
   }, [])
 
   return (

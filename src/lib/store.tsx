@@ -76,8 +76,10 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   })
 
   const fetchProfile = useCallback(async (userId: string): Promise<User | null> => {
-    const { data } = await supabase.from('profiles').select('*').eq('id', userId).single()
-    return data ? profileToUser(data) : null
+    try {
+      const { data } = await supabase.from('profiles').select('*').eq('id', userId).single()
+      return data ? profileToUser(data) : null
+    } catch { return null }
   }, [])
 
   const refreshUsers = useCallback(async () => {
@@ -92,29 +94,36 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
   // Auth state listener
   useEffect(() => {
+    // Watchdog: if the session check stalls (seen on iOS after the tab was
+    // frozen), don't leave the app on the spinner forever.
+    const watchdog = setTimeout(() => setAuthLoading(false), 8000)
+
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (session) {
         const profile = await fetchProfile(session.user.id)
-        setCurrentUser(profile)
+        if (profile) setCurrentUser(profile)
       }
+      clearTimeout(watchdog)
       setAuthLoading(false)
+    }).catch(() => { clearTimeout(watchdog); setAuthLoading(false) })
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'SIGNED_OUT') { setCurrentUser(null); return }
+      if (!session) return
+      const profile = await fetchProfile(session.user.id)
+      // A transient network failure on resume returns null — keep the user we have.
+      if (profile) setCurrentUser(profile)
     })
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      if (session) {
-        const profile = await fetchProfile(session.user.id)
-        setCurrentUser(profile)
-      } else {
-        setCurrentUser(null)
-      }
-    })
-
-    return () => subscription.unsubscribe()
+    return () => { clearTimeout(watchdog); subscription.unsubscribe() }
   }, [fetchProfile])
 
   // Fetch tickets
-  const fetchTickets = useCallback(async () => {
-    setTicketsLoading(true)
+  // `silent` = background refresh: update rows in place without flipping
+  // ticketsLoading, because the loading state unmounts the dashboard and with
+  // it any open ticket / new-ticket modal.
+  const fetchTickets = useCallback(async (silent = false) => {
+    if (!silent) setTicketsLoading(true)
     try {
       const { data, error } = await supabase
         .from('tickets')
@@ -127,7 +136,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     } catch (_e) {
       // fail silently
     } finally {
-      setTicketsLoading(false)
+      if (!silent) setTicketsLoading(false)
     }
   }, [])
 
@@ -140,14 +149,18 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   // accounted for the bulk of our Supabase egress; now it's a 5-minute
   // fallback poll plus a refetch when the tab regains focus/visibility.
   useEffect(() => {
-    const interval = setInterval(fetchTickets, 5 * 60 * 1000)
-    const onVisible = () => { if (document.visibilityState === 'visible') fetchTickets() }
+    const silentRefresh = () => fetchTickets(true)
+    const interval = setInterval(silentRefresh, 5 * 60 * 1000)
+    const onVisible = () => {
+      if (document.visibilityState !== 'visible') return
+      // Nudge the auth client too — after a long sleep its token refresh may be stalled.
+      supabase.auth.getSession().catch(() => {})
+      silentRefresh()
+    }
     document.addEventListener('visibilitychange', onVisible)
-    window.addEventListener('focus', onVisible)
     return () => {
       clearInterval(interval)
       document.removeEventListener('visibilitychange', onVisible)
-      window.removeEventListener('focus', onVisible)
     }
   }, [fetchTickets])
 

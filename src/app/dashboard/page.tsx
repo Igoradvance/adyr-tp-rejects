@@ -29,7 +29,7 @@ export default function DashboardPage() {
     if (!authLoading && !currentUser) router.replace('/login')
   }, [authLoading, currentUser, router])
 
-  if (authLoading || (!currentUser && !authLoading) || loading) return (
+  if (authLoading || (!currentUser && !authLoading) || (loading && tickets.length === 0)) return (
     <div className="min-h-screen flex items-center justify-center">
       <div className="text-center">
         <div className="w-10 h-10 border-4 border-navy-500 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
