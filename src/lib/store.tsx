@@ -8,7 +8,7 @@ import {
 import { INITIAL_TICKETS } from './mockData'
 import { supabase, rowToTicket, ticketToRow } from './supabase'
 import { generateId } from './utils'
-import { sendStatusChangeEmail } from './email'
+import { sendStatusChangeEmail, pickTicketRecipients } from './email'
 
 interface StoreContextType {
   currentUser: User | null
@@ -322,9 +322,10 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     if (settings.emailsEnabled && ticket.status !== status) {
       // Contractor-bound users get only their contractor's tickets; users
       // without a contractor (QC/admin) get all.
-      const recipients = users.filter(
-        u => u.emailNotifications && u.email && (!u.contractor || u.contractor === ticket.contractor)
-      )
+      const recipients = pickTicketRecipients(users, {
+        contractor: ticket.contractor,
+        assignedToId: ticket.assignedToId,
+      })
       const openNotes = ticket.checklist.filter(it => !it.done).length
       await Promise.all(
         recipients.map(u =>

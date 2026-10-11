@@ -1,10 +1,13 @@
 import emailjs from '@emailjs/browser'
+import type { User } from '@/types'
 
 const SERVICE_ID = 'service_tokgdeg'
 const TEMPLATE_ID = 'template_pj52hzk'
 const PUBLIC_KEY = '82NUQlh-hTz9vQAz0'
 
-const APP_URL = 'https://adyr-tp-reject.vercel.app'
+// Must be the real production domain (note the trailing "s" in "rejects") -
+// the old adyr-tp-reject.vercel.app redirects to a Vercel login page.
+const APP_URL = 'https://adyr-tp-rejects.vercel.app'
 
 interface NotificationParams {
   toEmail: string
@@ -44,6 +47,29 @@ async function sendNotification(p: NotificationParams): Promise<boolean> {
     console.error('EmailJS send failed:', e)
     return false
   }
+}
+
+// Who gets the email for a ticket. The union of:
+//  - the assigned user (always - an explicit assignment means "you need to know")
+//  - the contractor's project manager(s) (always)
+//  - anyone who opted in to notifications: contractor users of that contractor,
+//    plus QC/admin (no contractor) as before
+// De-duplicated by email address. The global "emails paused" switch is checked by callers.
+export function pickTicketRecipients(
+  users: User[],
+  ticket: { contractor: string; assignedToId?: string }
+): User[] {
+  const seen = new Set<string>()
+  const out: User[] = []
+  for (const u of users) {
+    const key = u.email?.trim().toLowerCase()
+    if (!key || seen.has(key)) continue
+    const optedIn = !!u.emailNotifications && (!u.contractor || u.contractor === ticket.contractor)
+    const isAssignee = !!ticket.assignedToId && u.id === ticket.assignedToId
+    const isContractorPm = u.role === 'contractor_pm' && u.contractor === ticket.contractor
+    if (optedIn || isAssignee || isContractorPm) { seen.add(key); out.push(u) }
+  }
+  return out
 }
 
 export interface NewTicketEmailParams {

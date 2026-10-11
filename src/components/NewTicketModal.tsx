@@ -2,7 +2,7 @@
 import { useState } from 'react'
 import { useStore } from '@/lib/store'
 import { Contractor, Priority, TestPhase, SaipemStatus, ChecklistItem } from '@/types'
-import { sendNewTicketEmail } from '@/lib/email'
+import { sendNewTicketEmail, pickTicketRecipients } from '@/lib/email'
 import { generateId } from '@/lib/utils'
 import { X, Plus, Trash2 } from 'lucide-react'
 
@@ -66,9 +66,10 @@ export default function NewTicketModal({ onClose }: { onClose: () => void }) {
 
     // Notify users who opted-in to email notifications (per-user) — unless emails are paused
     if (settings.emailsEnabled) {
-      const recipients = users.filter(
-        u => u.emailNotifications && u.email && (!u.contractor || u.contractor === form.contractor)
-      )
+      const recipients = pickTicketRecipients(users, {
+        contractor: form.contractor,
+        assignedToId: form.assignedToId || undefined,
+      })
       await Promise.all(
         recipients.map(u =>
           sendNewTicketEmail({
