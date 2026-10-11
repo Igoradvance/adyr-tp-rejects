@@ -22,6 +22,8 @@ interface StoreContextType {
   users: User[]
   ticketsLoading: boolean
   refreshUsers: () => Promise<void>
+  /** Fresh users straight from the DB (falls back to the cached list on failure). */
+  getFreshUsers: () => Promise<User[]>
   createTicket: (data: Partial<Ticket>) => Promise<void>
   updateTicket: (id: string, data: Partial<Ticket>) => Promise<void>
   deleteTicket: (id: string) => Promise<void>
@@ -82,15 +84,27 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     } catch { return null }
   }, [])
 
-  const refreshUsers = useCallback(async () => {
+  const fetchUsersNow = useCallback(async (): Promise<User[] | null> => {
     try {
       // cache-busting timestamp param — guarantees fresh data past any CDN/browser cache
       const res = await fetch(`/api/users/list?t=${Date.now()}`, { cache: 'no-store' })
-      if (!res.ok) return
+      if (!res.ok) return null
       const json = await res.json()
-      if (json.users) setUsers(json.users.map(profileToUser))
-    } catch (_e) {}
+      if (!json.users) return null
+      const list: User[] = json.users.map(profileToUser)
+      setUsers(list)
+      return list
+    } catch (_e) { return null }
   }, [])
+
+  const refreshUsers = useCallback(async () => { await fetchUsersNow() }, [fetchUsersNow])
+
+  // Recipients of a notification must reflect the DB *at send time*: this tab's
+  // cached list can be hours old (the toggle may have been changed from another
+  // session), which is exactly how "notifications ON" updates went missing.
+  const getFreshUsers = useCallback(async (): Promise<User[]> => {
+    return (await fetchUsersNow()) ?? users
+  }, [fetchUsersNow, users])
 
   // Auth state listener
   useEffect(() => {
@@ -156,13 +170,14 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       // Nudge the auth client too — after a long sleep its token refresh may be stalled.
       supabase.auth.getSession().catch(() => {})
       silentRefresh()
+      refreshUsers()
     }
     document.addEventListener('visibilitychange', onVisible)
     return () => {
       clearInterval(interval)
       document.removeEventListener('visibilitychange', onVisible)
     }
-  }, [fetchTickets])
+  }, [fetchTickets, refreshUsers])
 
   // Realtime
   useEffect(() => {
@@ -322,7 +337,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     if (settings.emailsEnabled && ticket.status !== status) {
       // Contractor-bound users get only their contractor's tickets; users
       // without a contractor (QC/admin) get all.
-      const recipients = pickTicketRecipients(users, {
+      const recipients = pickTicketRecipients((await fetchUsersNow()) ?? users, {
         contractor: ticket.contractor,
         assignedToId: ticket.assignedToId,
       })
@@ -407,7 +422,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     <Ctx.Provider value={{
       currentUser, authLoading, login, logout,
       tickets, filteredTickets, selectedIds, filters, users, ticketsLoading,
-      refreshUsers, createTicket, updateTicket, deleteTicket, updateStatus, bulkUpdateStatus,
+      refreshUsers, getFreshUsers, createTicket, updateTicket, deleteTicket, updateStatus, bulkUpdateStatus,
       addChat, deleteChat, updateChecklist, importTickets, settings, updateSettings, toggleSelect, selectAll, clearSelection, setFilters,
     }}>
       {children}

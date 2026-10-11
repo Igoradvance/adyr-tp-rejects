@@ -11,7 +11,7 @@ import { X, Plus, Trash2 } from 'lucide-react'
 const TICKET_PATTERN = /^TP-\d{2}-\d{3}-[A-Za-z]-\d{3}-\d{3}[A-Za-z]?$/
 
 export default function NewTicketModal({ onClose }: { onClose: () => void }) {
-  const { createTicket, users, currentUser, settings } = useStore()
+  const { createTicket, users, currentUser, settings, getFreshUsers } = useStore()
   const [submitting, setSubmitting] = useState(false)
   const [form, setForm] = useState({
     ticketNumber: '',
@@ -66,7 +66,7 @@ export default function NewTicketModal({ onClose }: { onClose: () => void }) {
 
     // Notify users who opted-in to email notifications (per-user) — unless emails are paused
     if (settings.emailsEnabled) {
-      const recipients = pickTicketRecipients(users, {
+      const recipients = pickTicketRecipients(await getFreshUsers(), {
         contractor: form.contractor,
         assignedToId: form.assignedToId || undefined,
       })
