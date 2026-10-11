@@ -21,13 +21,21 @@ export default function LoginPage() {
   const [resetLoading, setResetLoading] = useState(false)
   const [logoOk, setLogoOk] = useState(true)
 
+  // /login?reset=1 (from an expired reset link) opens straight on the reset form
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get('reset')) setResetMode(true)
+  }, [])
+
   const handleReset = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!email.trim()) { setError('הכנס אימייל לאיפוס סיסמה'); return }
     setResetLoading(true)
     setError('')
     const { error: err } = await supabase.auth.resetPasswordForEmail(email.trim(), {
-      redirectTo: `${window.location.origin}/reset-password`,
+      // Always return people to the public production domain — never to a
+      // protected deployment URL or an old domain (those bounce to the Vercel
+      // login page). Localhost keeps working for development.
+      redirectTo: `${window.location.hostname === 'localhost' ? window.location.origin : 'https://adyr-tp-rejects.vercel.app'}/reset-password`,
     })
     setResetLoading(false)
     if (err) setError(err.message)

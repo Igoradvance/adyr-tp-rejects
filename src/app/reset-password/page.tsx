@@ -15,13 +15,36 @@ export default function ResetPasswordPage() {
   const [msg, setMsg] = useState('')
   const [error, setError] = useState('')
   const [ready, setReady] = useState(false)
+  const [failMsg, setFailMsg] = useState('')
 
   useEffect(() => {
-    // Supabase sends the token in the URL hash — onAuthStateChange picks it up
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === 'PASSWORD_RECOVERY') setReady(true)
+    let alive = true
+    const markReady = () => { if (alive) setReady(true) }
+
+    // 1) The link itself can carry an error (expired / already used / consumed
+    //    by an email scanner) — read it before anything else touches the URL.
+    const hash = new URLSearchParams(window.location.hash.replace(/^#/, ''))
+    const query = new URLSearchParams(window.location.search)
+    const linkError = hash.get('error_description') || query.get('error_description')
+    if (linkError) setFailMsg('הקישור פג תוקף או כבר נוצל. קישור איפוס פועל פעם אחת בלבד.')
+
+    // 2) PASSWORD_RECOVERY is emitted when the Supabase client is created, i.e.
+    //    BEFORE this page mounts. A late subscriber only receives INITIAL_SESSION
+    //    (carrying the recovery session), so accept that as well — otherwise the
+    //    page waits forever on the spinner.
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'PASSWORD_RECOVERY' || (session && (event === 'INITIAL_SESSION' || event === 'SIGNED_IN'))) markReady()
     })
-    return () => subscription.unsubscribe()
+
+    // 3) Belt and braces: a session may already be established.
+    supabase.auth.getSession().then(({ data }) => { if (data.session) markReady() }).catch(() => {})
+
+    // 4) Never spin forever: no session after 8s => the link is unusable.
+    const t = setTimeout(() => {
+      if (alive) setFailMsg(m => m || 'לא הצלחנו לאמת את הקישור. ייתכן שפג תוקפו או שכבר נעשה בו שימוש.')
+    }, 8000)
+
+    return () => { alive = false; clearTimeout(t); subscription.unsubscribe() }
   }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -58,6 +81,18 @@ export default function ResetPasswordPage() {
               <CircleCheck size={26} strokeWidth={2.2} />
             </div>
             <p className="text-emerald-700 font-bold">{msg}</p>
+          </div>
+        ) : !ready && failMsg ? (
+          <div className="text-center space-y-3 py-2">
+            <div className="w-14 h-14 rounded-2xl bg-red-50 text-red-600 flex items-center justify-center mx-auto">
+              <CircleAlert size={26} strokeWidth={2.2} />
+            </div>
+            <p className="text-ink font-bold">הקישור לא תקף</p>
+            <p className="text-ink-muted text-sm">{failMsg}</p>
+            <button onClick={() => router.replace('/login?reset=1')}
+              className="qt-btn w-full py-[13px] bg-navy-600 text-white rounded-xl font-bold text-[15px] mt-2">
+              בקש קישור חדש
+            </button>
           </div>
         ) : !ready ? (
           <div className="text-center space-y-3 py-2">
