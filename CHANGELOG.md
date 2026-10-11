@@ -1,3 +1,9 @@
+## Build 84 – 2026-10-11
+### אבטחה
+- **מעבר ל-Publishable key של Supabase** בצד הלקוח (`sb_publishable_…`, ציבורי מטבעו) במקום מפתח ה-anon הישן מסוג JWT. זה מאפשר לנטרל את ה-Legacy API keys ב-Supabase ובכך להפוך את מפתח ה-service_role שנחשף בעבר לחסר ערך. אומת מול Data, Auth ו-Realtime לפני ההעלאה.
+
+---
+
 ## Build 83 – 2026-10-11
 ### תוקן / אבטחה
 - **רשימת/יצירה/מחיקה של משתמשים נשברה אחרי החלפת מפתח ה-Supabase** — המפתח החדש (`sb_secret_…`) אינו JWT, וספריית supabase-js שלחה אותו גם כ-`Authorization: Bearer`, מה שה-Auth Admin API דוחה ("requires a valid Bearer token"). עכשיו מפתחות כאלה נשלחים בכותרת `apikey` בלבד.

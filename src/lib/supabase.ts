@@ -3,7 +3,7 @@ import { Ticket } from '@/types'
 
 export const supabase = createClient(
   'https://vdnbavacjilmgxijarkv.supabase.co',
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZkbmJhdmFjamlsbWd4aWphcmt2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIwODE1ODYsImV4cCI6MjA5NzY1NzU4Nn0.qczuPeUXbCdNMxm3vrj_5XoRt19l-AkuFW3ARdRdnUA'
+  'sb_publishable_cZNkomwgGVGtmo3eSlJlMw_VLd6Q4YL'
 )
 
 // Map DB row (snake_case) → Ticket (camelCase)
