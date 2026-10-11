@@ -51,9 +51,10 @@ async function sendNotification(p: NotificationParams): Promise<boolean> {
 
 // Who gets the email for a ticket. The union of:
 //  - the assigned user (always - an explicit assignment means "you need to know")
-//  - the contractor's project manager(s) (always)
-//  - anyone who opted in to notifications: contractor users of that contractor,
-//    plus QC/admin (no contractor) as before
+//  - anyone whose notification toggle is ON: users of that contractor, plus
+//    QC/admin (no contractor)
+// The per-user toggle is authoritative: a project manager with the toggle OFF
+// gets nothing unless a ticket is assigned to them directly.
 // De-duplicated by email address. The global "emails paused" switch is checked by callers.
 export function pickTicketRecipients(
   users: User[],
@@ -66,8 +67,7 @@ export function pickTicketRecipients(
     if (!key || seen.has(key)) continue
     const optedIn = !!u.emailNotifications && (!u.contractor || u.contractor === ticket.contractor)
     const isAssignee = !!ticket.assignedToId && u.id === ticket.assignedToId
-    const isContractorPm = u.role === 'contractor_pm' && u.contractor === ticket.contractor
-    if (optedIn || isAssignee || isContractorPm) { seen.add(key); out.push(u) }
+    if (optedIn || isAssignee) { seen.add(key); out.push(u) }
   }
   return out
 }
