@@ -1,10 +1,13 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin'
+import { requireRole } from '@/lib/apiAuth'
 
 export const dynamic = 'force-dynamic'
 
 // Backup history metadata (no full data payload — keeps the response light)
-export async function GET() {
+export async function GET(req: NextRequest) {
+  const auth = await requireRole(req, ['super_admin'])
+  if (!auth.ok) return auth.res
   const admin = getSupabaseAdmin()
   const { data, error } = await admin
     .from('backups')

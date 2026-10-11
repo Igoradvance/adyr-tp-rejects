@@ -1,9 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin'
+import { requireRole } from '@/lib/apiAuth'
 
 export const dynamic = 'force-dynamic'
 
 export async function POST(req: NextRequest) {
+  const auth = await requireRole(req, ['super_admin'])
+  if (!auth.ok) return auth.res
   const { userId, emailNotifications } = await req.json()
   if (!userId) return NextResponse.json({ error: 'userId חסר' }, { status: 400 })
 

@@ -1,13 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin'
+import { requireRole } from '@/lib/apiAuth'
 
 export const dynamic = 'force-dynamic'
 
+const ROLES = ['super_admin', 'quality_control', 'contractor_pm', 'contractor_employee', 'viewer']
+
 export async function POST(req: NextRequest) {
+  const auth = await requireRole(req, ['super_admin'])
+  if (!auth.ok) return auth.res
   const { name, email, password, role, contractor } = await req.json()
 
   if (!name || !email || !password || !role) {
     return NextResponse.json({ error: 'שדות חובה חסרים' }, { status: 400 })
+  }
+
+  if (!ROLES.includes(role)) {
+    return NextResponse.json({ error: 'תפקיד לא תקין' }, { status: 400 })
   }
 
   const admin = getSupabaseAdmin()

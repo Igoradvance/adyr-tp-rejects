@@ -1,10 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin'
+import { requireRole, isCronRequest } from '@/lib/apiAuth'
 
 export const dynamic = 'force-dynamic'
 
 // Called by Vercel Cron nightly, or manually by a super_admin ("backup now").
 export async function GET(req: NextRequest) {
+  if (!isCronRequest(req)) {
+    const auth = await requireRole(req, ['super_admin'])
+    if (!auth.ok) return auth.res
+  }
   const trigger = req.nextUrl.searchParams.get('trigger') === 'manual' ? 'manual' : 'auto'
   const admin = getSupabaseAdmin()
 

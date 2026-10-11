@@ -1,4 +1,5 @@
 'use client'
+import { authFetch } from '@/lib/authFetch'
 import { useState, useEffect } from 'react'
 import { useStore } from '@/lib/store'
 import { UserRole, Contractor, User } from '@/types'
@@ -51,7 +52,7 @@ export default function UserManagement({ onClose }: { onClose: () => void }) {
   const loadLive = async () => {
     setUsersLoading(true)
     try {
-      const res = await fetch(`/api/users/list?t=${Date.now()}`, { cache: 'no-store' })
+      const res = await authFetch(`/api/users/list?t=${Date.now()}`, { cache: 'no-store' })
       const json = await res.json()
       if (json.users) {
         setUsers(json.users.map(mapRow))
@@ -72,7 +73,7 @@ export default function UserManagement({ onClose }: { onClose: () => void }) {
     if (needsContractor && !form.contractor) { setError('יש לבחור קבלן'); return }
     setLoading(true)
 
-    const res = await fetch('/api/users/create', {
+    const res = await authFetch('/api/users/create', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -100,7 +101,7 @@ export default function UserManagement({ onClose }: { onClose: () => void }) {
     setNotifError('')
     setOptimistic(prev => ({ ...prev, [user.id]: newVal }))
     try {
-      const res = await fetch('/api/users/update', {
+      const res = await authFetch('/api/users/update', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId: user.id, emailNotifications: newVal }),
@@ -121,7 +122,7 @@ export default function UserManagement({ onClose }: { onClose: () => void }) {
   }
 
   const handleDelete = async (user: User) => {
-    const res = await fetch('/api/users/delete', {
+    const res = await authFetch('/api/users/delete', {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ userId: user.id }),

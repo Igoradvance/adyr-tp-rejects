@@ -1,11 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin'
+import { requireRole } from '@/lib/apiAuth'
 
 export const dynamic = 'force-dynamic'
 
 export async function DELETE(req: NextRequest) {
+  const auth = await requireRole(req, ['super_admin'])
+  if (!auth.ok) return auth.res
   const { userId } = await req.json()
   if (!userId) return NextResponse.json({ error: 'חסר userId' }, { status: 400 })
+  if (userId === auth.userId) return NextResponse.json({ error: 'לא ניתן למחוק את המשתמש המחובר' }, { status: 400 })
 
   const admin = getSupabaseAdmin()
 

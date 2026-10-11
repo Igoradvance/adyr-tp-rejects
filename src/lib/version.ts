@@ -1,5 +1,5 @@
-export const VERSION = '2.0.14'
-export const BUILD = 84
+export const VERSION = '2.1.0'
+export const BUILD = 85
 export const BUILD_DATE = '2026-09-17'
 export const APP_NAME = 'ADYR TP Reject – מערכת ניהול תקלות'
 export const COPYRIGHT = '© 2026 Igor Ositchansky – Advance Engineering. כל הזכויות שמורות.'

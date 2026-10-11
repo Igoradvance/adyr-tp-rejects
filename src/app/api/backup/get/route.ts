@@ -1,10 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin'
+import { requireRole } from '@/lib/apiAuth'
 
 export const dynamic = 'force-dynamic'
 
 // Full backup payload for download
 export async function GET(req: NextRequest) {
+  const auth = await requireRole(req, ['super_admin'])
+  if (!auth.ok) return auth.res
   const id = req.nextUrl.searchParams.get('id')
   if (!id) return NextResponse.json({ error: 'id חסר' }, { status: 400 })
 

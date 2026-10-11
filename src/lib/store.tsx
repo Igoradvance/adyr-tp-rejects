@@ -9,6 +9,7 @@ import { INITIAL_TICKETS } from './mockData'
 import { supabase, rowToTicket, ticketToRow } from './supabase'
 import { generateId } from './utils'
 import { sendStatusChangeEmail, pickTicketRecipients } from './email'
+import { authFetch } from './authFetch'
 
 interface StoreContextType {
   currentUser: User | null
@@ -87,7 +88,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const fetchUsersNow = useCallback(async (): Promise<User[] | null> => {
     try {
       // cache-busting timestamp param — guarantees fresh data past any CDN/browser cache
-      const res = await fetch(`/api/users/list?t=${Date.now()}`, { cache: 'no-store' })
+      const res = await authFetch(`/api/users/list?t=${Date.now()}`, { cache: 'no-store' })
       if (!res.ok) return null
       const json = await res.json()
       if (!json.users) return null
@@ -203,6 +204,10 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
   // Load users for assignment dropdowns
   useEffect(() => { refreshUsers() }, [refreshUsers])
+
+  // The users API now requires a login: (re)load as soon as a session exists,
+  // otherwise a fresh login would keep an empty list until the next tab focus.
+  useEffect(() => { if (currentUser) refreshUsers() }, [currentUser?.id, refreshUsers]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Load global app settings + subscribe to changes
   useEffect(() => {

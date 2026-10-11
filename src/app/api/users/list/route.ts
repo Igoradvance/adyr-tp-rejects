@@ -1,9 +1,14 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin'
+import { requireRole } from '@/lib/apiAuth'
 
 export const dynamic = 'force-dynamic'
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+  // Any signed-in user: the UI needs names/roles for assignment dropdowns and
+  // recipients for notification e-mails.
+  const auth = await requireRole(req, 'any')
+  if (!auth.ok) return auth.res
   const admin = getSupabaseAdmin()
 
   // Get all auth users (bypasses RLS completely)

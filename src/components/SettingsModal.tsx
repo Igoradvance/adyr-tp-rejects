@@ -1,4 +1,5 @@
 'use client'
+import { authFetch } from '@/lib/authFetch'
 import { useState, useRef, useEffect } from 'react'
 import { useStore } from '@/lib/store'
 import { X, Settings, Mail, MailX, Download, Upload, Database, Clock, HardDriveDownload, RotateCcw } from 'lucide-react'
@@ -45,7 +46,7 @@ export default function SettingsModal({ onClose }: { onClose: () => void }) {
     setRunningBackup(true)
     setBackupMsg('')
     try {
-      const res = await fetch('/api/backup/run?trigger=manual')
+      const res = await authFetch('/api/backup/run?trigger=manual')
       const json = await res.json()
       if (json.error) setBackupMsg('גיבוי נכשל: ' + json.error)
       else { setBackupMsg(`גיבוי נשמר (${json.ticketCount} תקלות)`); await loadHistory() }
