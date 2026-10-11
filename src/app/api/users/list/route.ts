@@ -8,7 +8,15 @@ export async function GET() {
 
   // Get all auth users (bypasses RLS completely)
   const { data: authData, error: authError } = await admin.auth.admin.listUsers()
-  if (authError) return NextResponse.json({ error: authError.message }, { status: 500 })
+  if (authError) {
+    // Auth admin API unavailable — degrade to the profiles table (what the UI
+    // actually renders) instead of returning 500 and emptying every dropdown.
+    console.error('listUsers failed, falling back to profiles:', authError.message)
+    const { data: fallback } = await admin.from('profiles').select('*')
+    return NextResponse.json({ users: fallback ?? [], degraded: true }, {
+      headers: { 'Cache-Control': 'no-store, max-age=0' },
+    })
+  }
 
   // Get all profiles
   const { data: profilesData } = await admin.from('profiles').select('*')
