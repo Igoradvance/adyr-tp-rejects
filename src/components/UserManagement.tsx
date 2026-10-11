@@ -126,12 +126,15 @@ export default function UserManagement({ onClose }: { onClose: () => void }) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ userId: user.id }),
     })
-    const json = await res.json()
-    if (!json.error) {
-      await loadLive()
-      await refreshUsers()
+    const json = await res.json().catch(() => ({ error: `HTTP ${res.status}` }))
+    if (!res.ok || json.error) {
+      setNotifError(`מחיקה נכשלה: ${json.error || res.status}`)
       setDeleteConfirm(null)
+      return
     }
+    await loadLive()
+    await refreshUsers()
+    setDeleteConfirm(null)
   }
 
   return (
