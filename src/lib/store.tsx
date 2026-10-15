@@ -333,6 +333,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     const now = new Date().toISOString()
     const ticket = tickets.find(t => t.id === id)
     if (!ticket) return
+    if (!canReopenClosed(currentUser.role) && ticket.status === 'סגור' && status !== 'סגור') return
     const change: StatusChange = { id: generateId(), ticketId: id, userId: currentUser.id, userName: currentUser.name, oldStatus: ticket.status, newStatus: status, createdAt: now }
     const updated = { ...ticket, status, updatedAt: now, closedAt: status === 'סגור' ? now : ticket.closedAt, statusHistory: [...ticket.statusHistory, change] }
     setTickets(prev => prev.map(t => t.id === id ? updated : t))
@@ -368,7 +369,10 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const bulkUpdateStatus = useCallback(async (ids: string[], status: Status) => {
     if (!currentUser) return
     const now = new Date().toISOString()
-    const updatedList = tickets.filter(t => ids.includes(t.id)).map(t => {
+    // Closed tickets in the selection are skipped for contractor users
+    const updatedList = tickets.filter(t => ids.includes(t.id))
+      .filter(t => canReopenClosed(currentUser.role) || t.status !== 'סגור' || status === 'סגור')
+      .map(t => {
       const change: StatusChange = { id: generateId(), ticketId: t.id, userId: currentUser.id, userName: currentUser.name, oldStatus: t.status, newStatus: status, createdAt: now }
       return { ...t, status, updatedAt: now, closedAt: status === 'סגור' ? now : t.closedAt, statusHistory: [...t.statusHistory, change] }
     })
@@ -433,6 +437,11 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       {children}
     </Ctx.Provider>
   )
+}
+
+/** Only the QC team (and admin) may move a ticket out of 'סגור'. Enforced in the DB too (scripts/lock_closed_tickets.sql). */
+export function canReopenClosed(role?: string) {
+  return role === 'super_admin' || role === 'quality_control'
 }
 
 export function useStore() {

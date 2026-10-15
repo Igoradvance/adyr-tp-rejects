@@ -132,7 +132,7 @@ export default function TicketTable() {
                 const unread = !!currentUser && relevantMessages.length > effectiveReadCount
 
                 const mine = isContractorPm && ticket.contractor === currentUser?.contractor
-                const canEditStatus = isQCOrAdmin || mine
+                const canEditStatus = isQCOrAdmin || (mine && ticket.status !== 'סגור')
                 const canEditPriority = isQCOrAdmin || mine
                 const canEditFields = isQCOrAdmin
                 const canAssign = isQCOrAdmin || mine

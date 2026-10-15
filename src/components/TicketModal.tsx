@@ -52,7 +52,8 @@ export default function TicketModal({ ticketId, onClose }: Props) {
   const allowedStatuses = (): Status[] => {
     if (isViewer) return []
     if (isQCOrAdmin) return ['פתוח', 'בטיפול', 'ממתין לאישור', 'סגור']
-    if (isMyContractor) return ['בטיפול', 'ממתין לאישור']
+    // A ticket closed by QC stays closed for the contractor side
+    if (isMyContractor && ticket.status !== 'סגור') return ['בטיפול', 'ממתין לאישור']
     return []
   }
 
@@ -319,7 +320,12 @@ export default function TicketModal({ ticketId, onClose }: Props) {
                   ))}
                 </div>
               ) : (
-                <StatusBadge status={ticket.status} />
+                <>
+                  <StatusBadge status={ticket.status} />
+                  {isMyContractor && ticket.status === 'סגור' && (
+                    <p className="mt-1.5 text-[11.5px] text-ink-muted">התקלה נסגרה — פתיחה מחדש רק ע״י צוות בקרת האיכות</p>
+                  )}
+                </>
               )}
             </div>
 
