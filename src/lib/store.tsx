@@ -122,12 +122,18 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       setAuthLoading(false)
     }).catch(() => { clearTimeout(watchdog); setAuthLoading(false) })
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+    // NOTE: never await a Supabase call directly inside this callback — it runs
+    // while supabase-js holds its auth lock, and a query needs that same lock
+    // (deadlock: login hangs until a page refresh). Defer the work instead.
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_OUT') { setCurrentUser(null); return }
-      if (!session) return
-      const profile = await fetchProfile(session.user.id)
-      // A transient network failure on resume returns null — keep the user we have.
-      if (profile) setCurrentUser(profile)
+      if (!session || event === 'TOKEN_REFRESHED') return
+      const uid = session.user.id
+      setTimeout(async () => {
+        const profile = await fetchProfile(uid)
+        // A transient network failure on resume returns null — keep the user we have.
+        if (profile) setCurrentUser(profile)
+      }, 0)
     })
 
     return () => { clearTimeout(watchdog); subscription.unsubscribe() }
@@ -246,9 +252,18 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   }, [settings])
 
   const login = useCallback(async (email: string, password: string): Promise<string | null> => {
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
-    return error ? error.message : null
-  }, [])
+    // Never leave the login button spinning forever on a stalled network.
+    const timeout = new Promise<'timeout'>(resolve => setTimeout(() => resolve('timeout'), 20000))
+    const res = await Promise.race([supabase.auth.signInWithPassword({ email, password }), timeout])
+    if (res === 'timeout') return 'ההתחברות מתעכבת — בדוק את החיבור ונסה שוב'
+    if (res.error) return res.error.message
+    // Load the profile here so the dashboard has the user the moment we navigate.
+    if (res.data.user) {
+      const profile = await fetchProfile(res.data.user.id)
+      if (profile) setCurrentUser(profile)
+    }
+    return null
+  }, [fetchProfile])
 
   const logout = useCallback(async () => {
     await supabase.auth.signOut()
