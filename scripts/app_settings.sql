@@ -32,5 +32,11 @@ create policy "settings_write" on public.app_settings
       where p.id = auth.uid() and p.role = 'super_admin')
   );
 
+-- Explicit privileges (Supabase stops granting them by default to new tables
+-- from 2026-10-30). Policies above decide who actually reads/writes; the
+-- browser saves settings with upsert = INSERT + UPDATE.
+revoke all on public.app_settings from anon;
+grant select, insert, update on public.app_settings to authenticated;
+
 -- Enable realtime
 alter publication supabase_realtime add table app_settings;

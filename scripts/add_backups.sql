@@ -17,4 +17,10 @@ create policy backups_read on public.backups
       where p.id = auth.uid() and p.role = 'super_admin')
   );
 
+-- Explicit privileges (Supabase stops granting them by default to new tables
+-- from 2026-10-30). RLS above still limits reads to super_admin.
+revoke all on public.backups from anon;
 grant select on public.backups to authenticated;
+-- The /api/backup/* routes (service key): list/get read, run inserts and
+-- prunes old 'auto' snapshots.
+grant select, insert, delete on public.backups to service_role;

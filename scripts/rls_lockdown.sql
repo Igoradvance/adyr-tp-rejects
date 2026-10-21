@@ -84,6 +84,11 @@ revoke all on public.tickets, public.profiles, public.app_settings, public.backu
 grant select, insert, update, delete on public.tickets to authenticated;
 grant select on public.profiles to authenticated;
 revoke insert, update, delete on public.profiles from authenticated;
+-- Server routes (service key bypasses RLS but still needs table privileges —
+-- not granted by default to tables created after 2026-10-30):
+-- /api/users/* read+write profiles, /api/backup/run reads tickets.
+grant select, insert, update, delete on public.profiles to service_role;
+grant select on public.tickets to service_role;
 
 -- 6) Verify: should list exactly the policies above
 select tablename, policyname, cmd from pg_policies
