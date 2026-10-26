@@ -1,11 +1,15 @@
 'use client'
-import { useMemo, useState } from 'react'
+import { Fragment, useMemo, useState } from 'react'
 import * as XLSX from 'xlsx'
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend, CartesianGrid,
 } from 'recharts'
 import { Ticket, User } from '@/types'
-import { FileSpreadsheet } from 'lucide-react'
+import { FileSpreadsheet, ChevronLeft } from 'lucide-react'
+import dynamic from 'next/dynamic'
+
+// Loaded only when a ticket is clicked — keeps the KPI page light
+const TicketModal = dynamic(() => import('./TicketModal'), { ssr: false })
 
 /**
  * "Who handled what" per contractor person (PM / employee), built from the
@@ -52,6 +56,25 @@ interface Row {
   toApproval: number
   actions: number
   openLoad: number
+  items: Record<Metric, Item[]>
+}
+
+/** One ticket event behind a count — what the user drills into. */
+interface Item {
+  ticket: Ticket
+  at: string
+  change: string
+}
+
+const fmtDate = (iso: string) => {
+  const d = new Date(iso)
+  return `${d.getDate()}/${d.getMonth() + 1} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
+}
+const daysBetween = (a: string, b: string) => Math.max(0, Math.round((new Date(b).getTime() - new Date(a).getTime()) / 86400000))
+const PRIORITY_CLS: Record<string, string> = {
+  'גבוהה': 'bg-red-50 text-red-700 border-red-200',
+  'בינונית': 'bg-amber-50 text-amber-700 border-amber-200',
+  'נמוכה': 'bg-emerald-50 text-emerald-700 border-emerald-200',
 }
 
 const ROLE_LABEL: Record<string, string> = {
@@ -73,6 +96,8 @@ export default function WorkloadPanel({ tickets, users, lockedContractor }: {
   const [person, setPerson] = useState<string>('all')
   const [metric, setMetric] = useState<Metric>('closures')
   const [view, setView] = useState<View>('person')
+  const [expanded, setExpanded] = useState<string | null>(null)
+  const [openTicketId, setOpenTicketId] = useState<string | null>(null)
 
   // [start, end) of the selected period, local time
   const [rangeStart, rangeEnd] = useMemo(() => {
@@ -99,7 +124,11 @@ export default function WorkloadPanel({ tickets, users, lockedContractor }: {
   const { rows, daily, dayKeys, unassignedClosures } = useMemo(() => {
     const byId = new Map<string, Row>()
     for (const u of people) {
-      byId.set(u.id, { id: u.id, name: u.name, contractor: u.contractor ?? '', role: u.role, closures: 0, toApproval: 0, actions: 0, openLoad: 0 })
+      byId.set(u.id, {
+        id: u.id, name: u.name, contractor: u.contractor ?? '', role: u.role,
+        closures: 0, toApproval: 0, actions: 0, openLoad: 0,
+        items: { closures: [], toApproval: [], actions: [] },
+      })
     }
     const inRange = (iso: string) => { const t = new Date(iso); return t >= rangeStart && t < rangeEnd }
 
@@ -120,22 +149,28 @@ export default function WorkloadPanel({ tickets, users, lockedContractor }: {
 
       for (const h of t.statusHistory ?? []) {
         if (!inRange(h.createdAt)) continue
+        const item: Item = { ticket: t, at: h.createdAt, change: `${h.oldStatus} ← ${h.newStatus}` }
         if (h.newStatus === 'סגור' && h.oldStatus !== 'סגור') {
           const r = t.assignedToId ? byId.get(t.assignedToId) : undefined
-          if (r) { r.closures++; if (metric === 'closures') bump(h.createdAt, r.id) }
+          if (r) { r.closures++; r.items.closures.push(item); if (metric === 'closures') bump(h.createdAt, r.id) }
           else if (!t.assignedToId) { unassignedClosures++; if (metric === 'closures' && person === 'all') bump(h.createdAt, UNASSIGNED) }
         }
         const actor = byId.get(h.userId)
         if (!actor) continue
         actor.actions++
+        actor.items.actions.push(item)
         if (metric === 'actions') bump(h.createdAt, actor.id)
         if (h.newStatus === 'ממתין לאישור') {
           actor.toApproval++
+          actor.items.toApproval.push(item)
           if (metric === 'toApproval') bump(h.createdAt, actor.id)
         }
       }
     }
 
+    byId.forEach(r => {
+      for (const k of ['closures', 'toApproval', 'actions'] as Metric[]) r.items[k].sort((a, b) => b.at.localeCompare(a.at))
+    })
     let rows = Array.from(byId.values())
     if (person !== 'all') rows = rows.filter(r => r.id === person)
     rows.sort((a, b) => b[metric] - a[metric] || b.actions - a.actions || a.name.localeCompare(b.name, 'he'))
@@ -183,12 +218,22 @@ export default function WorkloadPanel({ tickets, users, lockedContractor }: {
       ['יום', ...rows.map(r => r.name)],
       ...dayKeys.map(k => [shortDay(k), ...rows.map(r => daily.get(k)?.get(r.id) ?? 0)]),
     ]
+    const detail = [
+      ['עובד', 'מס׳ תקלה', 'תיאור', 'עדיפות', 'קבלן', 'שינוי', 'תאריך', 'ימים מפתיחה'],
+      ...rows.flatMap(r => r.items[metric].map(it => [
+        r.name, it.ticket.ticketNumber, it.ticket.description, it.ticket.priority, it.ticket.contractor,
+        it.change, fmtDate(it.at), daysBetween(it.ticket.openedAt, it.at),
+      ])),
+    ]
     const wb = XLSX.utils.book_new()
     const ws1 = XLSX.utils.aoa_to_sheet([[`ביצועים לפי עובד · ${rangeText}`], [], ...summary])
     const ws2 = XLSX.utils.aoa_to_sheet([[`${metricLabel} לפי יום · ${rangeText}`], [], ...perDay])
+    const ws3 = XLSX.utils.aoa_to_sheet([[`פירוט ${metricLabel} · ${rangeText}`], [], ...detail])
     ws1['!cols'] = [{ wch: 22 }, { wch: 8 }, { wch: 12 }, { wch: 10 }, { wch: 14 }, { wch: 13 }, { wch: 12 }]
+    ws3['!cols'] = [{ wch: 20 }, { wch: 12 }, { wch: 50 }, { wch: 9 }, { wch: 7 }, { wch: 24 }, { wch: 13 }, { wch: 12 }]
     XLSX.utils.book_append_sheet(wb, ws1, 'לפי עובד')
     XLSX.utils.book_append_sheet(wb, ws2, 'לפי יום')
+    XLSX.utils.book_append_sheet(wb, ws3, 'פירוט תקלות')
     XLSX.writeFile(wb, `TP-Reject-Workload-${dayKey(new Date())}.xlsx`)
   }
 
@@ -317,22 +362,80 @@ export default function WorkloadPanel({ tickets, users, lockedContractor }: {
             {rows.length === 0 && (
               <tr><td colSpan={7} className="py-6 text-center text-gray-400">אין עובדים תואמים לסינון</td></tr>
             )}
-            {rows.map(r => (
-              <tr key={r.id} className="border-b border-line/60 hover:bg-navy-100/40 cursor-pointer"
-                onClick={() => setPerson(person === r.id ? 'all' : r.id)}
-                title={person === r.id ? 'הצג את כולם' : 'הצג רק את העובד הזה'}>
-                <td className="py-2 px-2 font-semibold text-ink">{r.name}</td>
-                <td className="py-2 px-2 text-ink-muted">{r.contractor}</td>
-                <td className="py-2 px-2 text-ink-muted">{ROLE_LABEL[r.role] ?? r.role}</td>
-                <td className={`py-2 px-2 text-center tabular-nums ${metric === 'closures' ? 'font-black text-ink' : ''}`}>{r.closures}</td>
-                <td className={`py-2 px-2 text-center tabular-nums ${metric === 'toApproval' ? 'font-black text-ink' : ''}`}>{r.toApproval}</td>
-                <td className={`py-2 px-2 text-center tabular-nums ${metric === 'actions' ? 'font-black text-ink' : ''}`}>{r.actions}</td>
-                <td className="py-2 px-2 text-center tabular-nums">{r.openLoad}</td>
-              </tr>
-            ))}
+            {rows.map(r => {
+              const isOpen = expanded === r.id
+              const items = r.items[metric]
+              // clicking a number shows exactly those tickets
+              const countCell = (k: Metric) => (
+                <td className="py-2 px-2 text-center">
+                  <button
+                    onClick={e => { e.stopPropagation(); setMetric(k); setExpanded(isOpen && metric === k ? null : r.id) }}
+                    disabled={r[k] === 0}
+                    className={`min-w-[2.25rem] px-2 py-0.5 rounded-lg tabular-nums transition-colors enabled:hover:bg-teal-50 enabled:hover:text-teal-700 enabled:underline enabled:decoration-dotted underline-offset-4 disabled:text-gray-300 ${
+                      metric === k ? 'font-black text-ink' : 'text-ink-muted'
+                    } ${isOpen && metric === k ? 'bg-teal-50 text-teal-700' : ''}`}>
+                    {r[k]}
+                  </button>
+                </td>
+              )
+              return (
+                <Fragment key={r.id}>
+                  <tr className={`border-b border-line/60 cursor-pointer ${isOpen ? 'bg-navy-100/50' : 'hover:bg-navy-100/40'}`}
+                    onClick={() => setExpanded(isOpen ? null : r.id)}
+                    title={isOpen ? 'סגור פירוט' : `הצג את ה${metricLabel} של ${r.name}`}>
+                    <td className="py-2 px-2 font-semibold text-ink">
+                      <span className="inline-flex items-center gap-1">
+                        <ChevronLeft size={14} className={`text-ink-muted transition-transform ${isOpen ? '-rotate-90' : ''}`} />
+                        {r.name}
+                      </span>
+                    </td>
+                    <td className="py-2 px-2 text-ink-muted">{r.contractor}</td>
+                    <td className="py-2 px-2 text-ink-muted">{ROLE_LABEL[r.role] ?? r.role}</td>
+                    {countCell('closures')}
+                    {countCell('toApproval')}
+                    {countCell('actions')}
+                    <td className="py-2 px-2 text-center tabular-nums">{r.openLoad}</td>
+                  </tr>
+                  {isOpen && (
+                    <tr className="bg-[#F7F9FC] border-b border-line">
+                      <td colSpan={7} className="px-3 py-3">
+                        <div className="text-[12px] font-bold text-ink-muted mb-2">
+                          {metricLabel} של {r.name} · {items.length}
+                        </div>
+                        {items.length === 0 ? (
+                          <div className="text-[12.5px] text-gray-400 py-2">אין {metricLabel} בתקופה שנבחרה</div>
+                        ) : (
+                          <ul className="space-y-1.5">
+                            {items.map((it, i) => (
+                              <li key={`${it.ticket.id}-${it.at}-${i}`}>
+                                <button onClick={() => setOpenTicketId(it.ticket.id)}
+                                  className="w-full text-right flex items-center gap-2.5 flex-wrap sm:flex-nowrap bg-white border-[1.5px] border-line rounded-xl px-3 py-2 hover:border-navy-300 transition-colors">
+                                  <span className="font-black text-navy-600 tabular-nums shrink-0">{it.ticket.ticketNumber}</span>
+                                  <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full border shrink-0 ${PRIORITY_CLS[it.ticket.priority] ?? 'border-line text-ink-muted'}`}>
+                                    {it.ticket.priority}
+                                  </span>
+                                  <span className="text-ink flex-1 min-w-0 truncate" title={it.ticket.description}>{it.ticket.description}</span>
+                                  {metric === 'actions' && <span className="text-[11.5px] text-ink-muted shrink-0">{it.change}</span>}
+                                  <span className="text-[11.5px] text-ink-muted tabular-nums shrink-0">{fmtDate(it.at)}</span>
+                                  <span className="text-[11.5px] text-ink-muted shrink-0" title="ימים מפתיחת התקלה">
+                                    {daysBetween(it.ticket.openedAt, it.at)} ימים
+                                  </span>
+                                </button>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </td>
+                    </tr>
+                  )}
+                </Fragment>
+              )
+            })}
           </tbody>
         </table>
       </div>
+
+      {openTicketId && <TicketModal ticketId={openTicketId} onClose={() => setOpenTicketId(null)} />}
     </section>
   )
 }
