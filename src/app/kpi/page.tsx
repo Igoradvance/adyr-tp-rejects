@@ -3,6 +3,7 @@ import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useStore } from '@/lib/store'
 import Header from '@/components/Header'
+import WorkloadPanel from '@/components/WorkloadPanel'
 import {
   PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip,
   ResponsiveContainer, Legend, LineChart, Line, CartesianGrid,
@@ -46,7 +47,7 @@ const CustomTooltip = ({ active, payload, label }: { active?: boolean; payload?:
 }
 
 export default function KPIPage() {
-  const { currentUser, authLoading, tickets } = useStore()
+  const { currentUser, authLoading, tickets, users } = useStore()
   const router = useRouter()
 
   useEffect(() => {
@@ -245,6 +246,13 @@ export default function KPIPage() {
             </ResponsiveContainer>
           </div>
         </div>
+
+        {/* Per-person workload / closures */}
+        <WorkloadPanel
+          tickets={visible}
+          users={users}
+          lockedContractor={currentUser.role === 'contractor_pm' || currentUser.role === 'contractor_employee' ? currentUser.contractor : undefined}
+        />
 
       </main>
     </div>
